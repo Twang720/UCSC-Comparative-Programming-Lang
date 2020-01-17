@@ -17,6 +17,60 @@
 (define *stderr* (current-error-port))
 (define *arg-list* (vector->list (current-command-line-arguments)))
 
+
+(define *function-table* (make-hash))
+
+(for-each
+    (lambda (pair)
+        (hash-set! *function-table* (car pair) (cadr pair)))
+    `( 
+           (+ , +) 
+           (- , -) 
+           (* , *)
+           (/ , /)
+	   (^ , expt)
+           (= , =)
+           (< , <)
+           (> , >)
+           (!= , not_equal)
+           (>= , >=)
+           (<= , <=)
+           (abs , abs)
+           (acos , acos)
+           (asin , asin)
+           (atan , atan)
+	   (ceiling , ceiling)
+           (cos , cos)
+           (exp , exp)
+           (floor , floor)
+	   (log , log)
+	   (round , round)           
+           (sin , sin)
+           (sqrt , sqrt)
+           (tan , tan)
+           (truncate , truncate)
+      )
+)
+
+(define *variable-table* (make-hash))
+	 
+(for-each
+    (lambda (pair) 
+        (hash-set! *variable-table* (car pair) (cadr pair)))
+    `( 
+       (e , (exp 1.0))
+       (pi , (acos -1.0))
+       (nan , (/ 0.0 0.0))
+       (eof , 0.0)
+     )
+)
+
+(define *array-table* (make-vector))
+
+(define *label-table* (make-hash))
+
+
+
 (define *run-file*
     (let-values
         (((dirpath basepath root?)
