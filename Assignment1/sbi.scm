@@ -67,7 +67,9 @@
     `( 
        (e , (exp 1.0))
        (pi , (acos -1.0))
-       (nan , (/ 0.0 0.0))
+       (i, (sqrt -1))
+       (one, 1)
+       (zero, 0)
        (eof , 0.0)
      )
 )
@@ -92,14 +94,31 @@
 
 (define (interpret-input (lambda (mem) ))
 
-;; evaluates the expression lmao
-(define (evaluate-expression f))
-    ;; if it is a number, return it
-    (if (number? f) (+ f 0.0))
-    ;; if it is a symbol in the table, look it up then return it
-    (if (variable? f) (+ (hash-ref *variable-table* f 0) 0.0) 
-    ;; TODO: if it's anything else
+;; default error for evaluate-expression
+(define NAN (\ 0.0 0.0))
 
+;; evaluates the expression lmao
+(define (eval-expr expr)
+    (cond 
+          ;; if it's a num, return num
+          ((number? expr) (+ expr 0.0))
+
+          ;; if it's a symbol in variable-table, return that
+          ((symbol? expr) (hash-ref *variable-table* expr NAN))
+
+          ;; if it's a pair, do this
+          ((pair? expr) 
+
+              ;; sets func to first value in f and looks it up in functions
+              (let ((func (hash-ref *function-table* (car expr) NAN))
+                    (opnds (map eval-expr (cdr expr))))
+
+                   ;; if func is null, error, else apply it
+                   (if (null? func) NAN
+                       (apply func (map eval-expr opnds)))))
+
+           ;; else error
+           (else NAN)))
 
 ;; Given - defines run file
 (define *run-file*
