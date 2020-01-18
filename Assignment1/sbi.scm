@@ -71,6 +71,24 @@
 
 
 
+(define (interpret-program args))
+
+(define (interpret-dim var expr))
+
+(define (interpret-let var expr))
+
+(define (interpret-goto label))
+
+(define (interpret-if args label))
+
+(define (interpret-print (lambda (printable)) ))
+
+(define (interpret-input (lambda (mem) ))
+
+(define (evaluate-expression f))
+
+
+
 (define *run-file*
     (let-values
         (((dirpath basepath root?)
