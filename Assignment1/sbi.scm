@@ -104,7 +104,7 @@
         ;; checks if label is in table
         (if (hash-has-key? *label-table* label)
             (interpret-program (hash-ref *label-table* label)) 
-            (die '("Error: Label not found in label table."))))))
+            (die '("Error: Label not found in label table.")))))
 
 ;; Checks to see if the argslist expression is true, and goes to label if it is
 (define (interpret-if args label)
@@ -125,21 +125,16 @@
     (cond 
           ;; if it's a num, return num
           ((number? expr) (+ expr 0.0))
-
           ;; if it's a symbol in variable-table, return that
           ((symbol? expr) (hash-ref *variable-table* expr NAN))
-
           ;; if it's a pair, do this
           ((pair? expr) 
-
               ;; sets func to first value in f and looks it up in functions
               (let ((func (hash-ref *function-table* (car expr) NAN))
                     (opnds (map eval-expr (cdr expr))))
-
                    ;; if func is null, error, else apply it
                    (if (null? func) NAN
                        (apply func (map eval-expr opnds)))))
-
            ;; else error
            (else NAN)))
 
