@@ -81,6 +81,11 @@
 
 
 (define (interpret-program args))
+    (if (null? args)
+        (interpret-program (cdr args))
+    ;; TODO: every fucking thing else
+    ( )
+    )
 
 (define (interpret-dim var expr))
 
@@ -120,7 +125,7 @@
            ;; else error
            (else NAN)))
 
-;; Given - defines run file
+;; Given - defines run file (?)
 (define *run-file*
     (let-values
         (((dirpath basepath root?)
