@@ -79,22 +79,28 @@
 (define *label-table* (make-hash))
 
 
-(define (interpret-program args))
+(define (interpret-program args)
     (if (null? args)
         (interpret-program (cdr args))
     ;; TODO: every fucking thing else
         (null)
     )
+)
 
 ;; might still need some looking at, kind of confused
 (define (interpret-dim var expr)
     (vector-set! *array-table* var 
-        (make-vector (abs (exact-round (eval-expr expr)))))
+        (make-vector (abs (exact-round (eval-expr expr))))))
 
 (define (interpret-let var expr))
 
 
-(define (interpret-goto label))
+(define (interpret-goto label)
+    (if (null? label)
+        (die '("Error: NULL label"))
+        (if (hash-has-key? *label-table* label)
+            (interpret-program (hash-ref *label-table* label)) 
+            (die '("Error: Label not found in label table."))))))
 
 (define (interpret-if args label))
 
