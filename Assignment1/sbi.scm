@@ -79,17 +79,20 @@
 (define *label-table* (make-hash))
 
 
-
 (define (interpret-program args))
     (if (null? args)
         (interpret-program (cdr args))
     ;; TODO: every fucking thing else
-    ( )
+        (null)
     )
 
-(define (interpret-dim var expr))
+;; might still need some looking at, kind of confused
+(define (interpret-dim var expr)
+    (vector-set! *array-table* var 
+        (make-vector (abs (exact-round (eval-expr expr)))))
 
 (define (interpret-let var expr))
+
 
 (define (interpret-goto label))
 
