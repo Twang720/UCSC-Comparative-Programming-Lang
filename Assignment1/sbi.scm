@@ -79,6 +79,7 @@
 (define *label-table* (make-hash))
 
 
+;; Interpets file line-by-line
 (define (interpret-program args)
     (if (null? args)
         (interpret-program (cdr args))
@@ -88,13 +89,14 @@
 )
 
 ;; might still need some looking at, kind of confused
+;; Creates a vector and puts it into array-table
 (define (interpret-dim var expr)
     (vector-set! *array-table* var 
         (make-vector (abs (exact-round (eval-expr expr))))))
 
 (define (interpret-let var expr))
 
-
+;; Checks if label exists and is in label table, if it is, inteprets it
 (define (interpret-goto label)
     ;; checks if label is null
     (if (null? label)
@@ -104,9 +106,10 @@
             (interpret-program (hash-ref *label-table* label)) 
             (die '("Error: Label not found in label table."))))))
 
+;; Checks to see if the argslist expression is true, and goes to label if it is
 (define (interpret-if args label)
     (when ((hash-ref *function-table* (car args))
-      (evaluate-expression cadr args) (evaluate-expression caddr args))
+      (evaluate-expression (cadr args)) (evaluate-expression (caddr args)))
         (interpret-goto label)
         
 
