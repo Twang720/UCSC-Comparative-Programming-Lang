@@ -24,7 +24,7 @@
 
 
 ;; Hash-table with all functions needed for lookup
-(define *function-table* (make-hash))
+(define *function-table* (make-hash)
 
 (for-each
     (lambda (pair)
@@ -56,9 +56,9 @@
            (tan , tan)
            (truncate , truncate)
       )
-)
+))
 
-(define *variable-table* (make-hash))
+(define *variable-table* (make-hash)
 	 
 ;; Defines pi, e, non-numbers, and (?) end of file
 (for-each
@@ -72,7 +72,7 @@
        (zero, 0)
        (eof , 0.0)
      )
-)
+))
 
 (define *array-table* (make-vector))
 
@@ -96,13 +96,19 @@
 
 
 (define (interpret-goto label)
+    ;; checks if label is null
     (if (null? label)
         (die '("Error: NULL label"))
+        ;; checks if label is in table
         (if (hash-has-key? *label-table* label)
             (interpret-program (hash-ref *label-table* label)) 
             (die '("Error: Label not found in label table."))))))
 
-(define (interpret-if args label))
+(define (interpret-if args label)
+    (when ((hash-ref *function-table* (car args))
+      (evaluate-expression cadr args) (evaluate-expression caddr args))
+        (interpret-goto label)
+        
 
 (define (interpret-print (lambda (printable)) ))
 
