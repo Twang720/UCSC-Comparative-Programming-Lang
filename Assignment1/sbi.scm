@@ -27,14 +27,14 @@
 (define *function-table* (make-hash)
 
 (for-each
-    (lambda (pair)
-        (hash-set! *function-table* (car pair) (cadr pair)))
+    (lambda (item)
+        (hash-set! *function-table* (car item) (cadr item)))
     `( 
            (+ , +) 
            (- , -) 
            (* , *)
            (/ , /)
-	   (^ , expt)
+           (^ , expt)
            (= , =)
            (< , <)
            (> , >)
@@ -45,12 +45,12 @@
            (acos , acos)
            (asin , asin)
            (atan , atan)
-	   (ceiling , ceiling)
+           (ceiling , ceiling)
            (cos , cos)
            (exp , exp)
            (floor , floor)
-	   (log , log)
-	   (round , round)           
+           (log , log)
+           (round , round)           
            (sin , sin)
            (sqrt , sqrt)
            (tan , tan)
@@ -62,8 +62,8 @@
 	 
 ;; Defines pi, e, non-numbers, and (?) end of file
 (for-each
-    (lambda (pair) 
-        (hash-set! *variable-table* (car pair) (cadr pair)))
+    (lambda (item) 
+        (hash-set! *variable-table* (car item) (cadr item)))
     `( 
        (e , (exp 1.0))
        (pi , (acos -1.0))
@@ -79,22 +79,70 @@
 (define *label-table* (make-hash))
 
 
+;; finds labels
+(define (interpret-labels program)
+	(when (not (null? program))
+		(when (!= (length (car program)) 1)
+			(when (symbol? (cadr (car program)))
+				(hash-set! *label-table* (cadr(car program)) program)
+			)
+		)
+		(interpret-labels (cdr program) )
+	)
+)
+
 ;; Interpets file line-by-line
-(define (interpret-program args)
-    (if (null? args)
-        (interpret-program (cdr args))
+(define (interpret-program program)
+    (if (null? program)
+        (exit 0)
     ;; TODO: every fucking thing else
-        (null)
+        (
+        	(let statement (car program)
+        		(cond
+        			((equal? (length line) 2) (identify-keyword (cadr statement))
+        			((equal? (length line) 3) (identify-keyword (caddr statement))
+        		)
+        	)
+        	(interpret-program (cdr program))
+        )
     )
 )
+
+;; sorts statements to respective interpret functions
+(define (identify-keyword statement)
+	(cond 
+		((equal? (car statement) 'dim) (interpret-dim (cadr (cadr statement)) (caddr (cadr statement)) ))
+		((equal? (car statement) 'let) (interpret-let (cadr statement) (caddr statement) ))
+		((equal? (car statement) 'goto) (interpret-goto (cadr statement) ))
+		((equal? (car statement) 'if) (interpret-if (cadr statement) (caddr statement) ))
+		((equal? (car statement) 'print) (interpret-print (cdr statement) ))
+		((equal? (car statement) 'input) (interpret-input (car statement) ))
+	)
+)
+
 
 ;; might still need some looking at, kind of confused
 ;; Creates a vector and puts it into array-table
 (define (interpret-dim var expr)
-    (vector-set! *array-table* var 
-        (make-vector (abs (exact-round (eval-expr expr))))))
+	(if (symbol? var)
+    	(vector-set! *array-table* 
+    		var (make-vector (exact-round (eval-expr expr))) 0.0)
+   		)
+		(exit 1)
+	)
+)
 
-(define (interpret-let var expr))
+;; let func
+(define (interpret-let mem expr)
+	(if ((symbol? mem) 
+		(hash-set! *variable-table* 
+			name (exact-round (eval-expr expr))))
+		((if (and (vector? (cadr mem)) (> (vector-length (cadr mem)) ((caddr mem))) )
+			vector-set! *array-table* (cadr mem) (caddr mem) (eval-expr expr))
+			(exit 1)
+		)
+    )
+)
 
 ;; Checks if label exists and is in label table, if it is, inteprets it
 (define (interpret-goto label)
@@ -109,13 +157,15 @@
 ;; Checks to see if the argslist expression is true, and goes to label if it is
 (define (interpret-if args label)
     (when ((hash-ref *function-table* (car args))
-      (evaluate-expression (cadr args)) (evaluate-expression (caddr args)))
+      (eval-expr (cadr args)) (eval-expr (caddr args)))
         (interpret-goto label)
         
 
-(define (interpret-print (lambda (printable)) ))
+;; <prints> is a list of printables 
+(define (interpret-print prints ))
 
-(define (interpret-input (lambda (mem) ))
+;; first argument of the <mems> list is the key//address (?) rest are the values to store
+(define (interpret-input mems ))
 
 ;; default error for evaluate-expression
 (define NAN (\ 0.0 0.0))
@@ -191,9 +241,11 @@
         (usage-exit)
         (let* ((sbprogfile (car arglist))
                (program (readlist-from-inputfile sbprogfile)))
-              (write-program-by-line sbprogfile program))))
+              (write-program-by-line sbprogfile program)
+              (interpret-labels program)
+              (interpret-program program)
+              )))
 
 ;; Given - runs main
 (main *arg-list*)
-
 
