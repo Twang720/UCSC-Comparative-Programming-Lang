@@ -38,7 +38,7 @@
            (= , =)
            (< , <)
            (> , >)
-           (!= , not_equal)
+           (!= , (lambda (x y) (not (equal? x y))))
            (>= , >=)
            (<= , <=)
            (abs , abs)
@@ -67,13 +67,13 @@
        (e , (exp 1.0))
        (pi , (acos -1.0))
        (i, (sqrt -1))
-       (one, 1)
-       (zero, 0)
+       (one, 1.0)
+       (zero, 0.0)
        (eof , 0.0)
      )   
 )
 
-(define *array-table* (make-vector))
+(define *array-table* (make-hash))
 
 (define *label-table* (make-hash))
 
@@ -138,13 +138,12 @@
         )   
 )
 
-
 ;; might still need some looking at, kind of confused
 ;; Creates a vector and puts it into array-table
 (define (interpret-dim var expr)
         (if (symbol? var)
         (vector-set! *array-table* 
-                var (make-vector (exact-round (eval-expr expr))) 0.0))
+                var (make-vector (exact-round (eval-expr expr)) 0.0)))
         (exit 1)
 )
 
