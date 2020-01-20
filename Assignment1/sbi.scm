@@ -24,14 +24,14 @@
 
 
 ;; Hash-table with all functions needed for lookup
-(define *function-table* (make-hash)
+(define *function-table* (make-hash))
 
 (for-each
     (lambda (item)
         (hash-set! *function-table* (car item) (cadr item)))
-    `( 
-           (+ , +) 
-           (- , -) 
+    `(
+           (+ , +)
+           (- , -)
            (* , *)
            (/ , /)
            (^ , expt)
@@ -50,98 +50,115 @@
            (exp , exp)
            (floor , floor)
            (log , log)
-           (round , round)           
+           (round , round)
            (sin , sin)
            (sqrt , sqrt)
            (tan , tan)
            (truncate , truncate)
       )
-))
+)
 
-(define *variable-table* (make-hash)
-	 
+(define *variable-table* (make-hash))
 ;; Defines pi, e, non-numbers, and (?) end of file
 (for-each
     (lambda (item) 
         (hash-set! *variable-table* (car item) (cadr item)))
-    `( 
+    `(  
        (e , (exp 1.0))
        (pi , (acos -1.0))
        (i, (sqrt -1))
        (one, 1)
        (zero, 0)
        (eof , 0.0)
-     )
-))
+     )   
+)
 
 (define *array-table* (make-vector))
 
 (define *label-table* (make-hash))
 
+;; default error for evaluate-expression
+(define NAN (\ 0.0 0.0))
+
+;; evaluates the expression
+(define (eval-expr expr)
+    (cond 
+          ;; if it's a num, return num
+          ((number? expr) (+ expr 0.0))
+          ;; if it's a symbol in variable-table, return that
+          ((symbol? expr) (hash-ref *variable-table* expr NAN))
+          ;; if it's a pair, do this
+          ((pair? expr) 
+              ;; sets func to first value in f and looks it up in functions
+              (let ((func (hash-ref *function-table* (car expr) NAN))
+                    (opnds (map eval-expr (cdr expr))))
+                   ;; if func is null, error, else apply it
+                   (if (null? func) NAN 
+                       (apply func (map eval-expr opnds)))))
+           ;; else error
+           (else NAN)))
 
 ;; finds labels
 (define (interpret-labels program)
-	(when (not (null? program))
-		(when (!= (length (car program)) 1)
-			(when (symbol? (cadr (car program)))
-				(hash-set! *label-table* (cadr(car program)) program)
-			)
-		)
-		(interpret-labels (cdr program) )
-	)
+        (when (not (null? program))
+                (when (!= (length (car program)) 1)
+                        (when (symbol? (cadr (car program)))
+                                (hash-set! *label-table* (cadr(car program)) program)
+                        )   
+                )   
+                (interpret-labels (cdr program) )
+        )   
 )
 
 ;; Interpets file line-by-line
 (define (interpret-program program)
     (if (null? program)
         (exit 0)
-    ;; TODO: every fucking thing else
-        (
-        	(let statement (car program)
-        		(cond
-        			((equal? (length line) 2) (identify-keyword (cadr statement))
-        			((equal? (length line) 3) (identify-keyword (caddr statement))
-        		)
-        	)
-        	(interpret-program (cdr program))
-        )
-    )
+        (   
+                (let statement (car program)
+                        (cond
+                                ((equal? (length line) 2) (identify-keyword (cadr statement))
+                                ((equal? (length line) 3) (identify-keyword (caddr statement))
+                        )   
+                )   
+                (interpret-program (cdr program))
+        )   
+    )   
 )
 
 ;; sorts statements to respective interpret functions
 (define (identify-keyword statement)
-	(cond 
-		((equal? (car statement) 'dim) (interpret-dim (cadr (cadr statement)) (caddr (cadr statement)) ))
-		((equal? (car statement) 'let) (interpret-let (cadr statement) (caddr statement) ))
-		((equal? (car statement) 'goto) (interpret-goto (cadr statement) ))
-		((equal? (car statement) 'if) (interpret-if (cadr statement) (caddr statement) ))
-		((equal? (car statement) 'print) (interpret-print (cdr statement) ))
-		((equal? (car statement) 'input) (interpret-input (car statement) ))
-	)
+        (cond 
+                ((equal? (car statement) 'dim) (interpret-dim (cadr (cadr statement)) (caddr (cadr statement)) ))
+                ((equal? (car statement) 'let) (interpret-let (cadr statement) (caddr statement) ))
+                ((equal? (car statement) 'goto) (interpret-goto (cadr statement) ))
+                ((equal? (car statement) 'if) (interpret-if (cadr statement) (caddr statement) ))
+                ((equal? (car statement) 'print) (interpret-print (cdr statement) ))
+                ((equal? (car statement) 'input) (interpret-input (car statement) ))
+        )   
 )
 
 
 ;; might still need some looking at, kind of confused
 ;; Creates a vector and puts it into array-table
 (define (interpret-dim var expr)
-	(if (symbol? var)
-    	(vector-set! *array-table* 
-    		var (make-vector (exact-round (eval-expr expr))) 0.0)
-   		)
-		(exit 1)
-	)
+        (if (symbol? var)
+        (vector-set! *array-table* 
+                var (make-vector (exact-round (eval-expr expr))) 0.0))
+        (exit 1)
 )
+
 
 ;; let func
 (define (interpret-let mem expr)
-	(if ((symbol? mem) 
-		(hash-set! *variable-table* 
-			name (exact-round (eval-expr expr))))
-		((if (and (vector? (cadr mem)) (> (vector-length (cadr mem)) ((caddr mem))) )
-			vector-set! *array-table* (cadr mem) (caddr mem) (eval-expr expr))
-			(exit 1)
-		)
-    )
+        (if ((symbol? mem) 
+                (hash-set! *variable-table* 
+                        name (exact-round (eval-expr expr))))
+                ((if (and (vector? (cadr mem)) (> (vector-length (cadr mem)) ((caddr mem))) )
+                        vector-set! *array-table* (cadr mem) (caddr mem) (eval-expr expr))
+                        (exit 1)
+                )   
+        )   
 )
 
 ;; Checks if label exists and is in label table, if it is, inteprets it
@@ -158,35 +175,21 @@
 (define (interpret-if args label)
     (when ((hash-ref *function-table* (car args))
       (eval-expr (cadr args)) (eval-expr (caddr args)))
-        (interpret-goto label)
-        
+        (interpret-goto label)))
+    
 
 ;; <prints> is a list of printables 
-(define (interpret-print prints ))
+(define (interpret-print prints )
+    (if (null? prints)
+            (printf "~n")
+    (if (string? car prints)
+            (display car prints)
+        (display eval-expr (car prints)))
+    (interpret-print (cdr prints)))) 
 
 ;; first argument of the <mems> list is the key//address (?) rest are the values to store
 (define (interpret-input mems ))
 
-;; default error for evaluate-expression
-(define NAN (\ 0.0 0.0))
-
-;; evaluates the expression lmao
-(define (eval-expr expr)
-    (cond 
-          ;; if it's a num, return num
-          ((number? expr) (+ expr 0.0))
-          ;; if it's a symbol in variable-table, return that
-          ((symbol? expr) (hash-ref *variable-table* expr NAN))
-          ;; if it's a pair, do this
-          ((pair? expr) 
-              ;; sets func to first value in f and looks it up in functions
-              (let ((func (hash-ref *function-table* (car expr) NAN))
-                    (opnds (map eval-expr (cdr expr))))
-                   ;; if func is null, error, else apply it
-                   (if (null? func) NAN
-                       (apply func (map eval-expr opnds)))))
-           ;; else error
-           (else NAN)))
 
 ;; Given - defines run file (?)
 (define *run-file*
@@ -241,10 +244,10 @@
         (usage-exit)
         (let* ((sbprogfile (car arglist))
                (program (readlist-from-inputfile sbprogfile)))
-              (write-program-by-line sbprogfile program)
+               (write-program-by-line sbprogfile program)
               (interpret-labels program)
               (interpret-program program)
-              )))
+              ))) 
 
 ;; Given - runs main
 (main *arg-list*)
