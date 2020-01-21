@@ -77,9 +77,6 @@
 
 (define *label-table* (make-hash))
 
-;; default error for evaluate-expression
-(define NAN (\ 0.0 0.0))
-
 ;; evaluates the expression
 (define (eval-expr expr)
     (cond 
