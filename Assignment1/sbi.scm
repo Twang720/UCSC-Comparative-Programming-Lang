@@ -96,9 +96,9 @@
                 ;; finally, checks if its a vector
                 (if (hash-has-key? *array-table* (car expr))
                   (vector-ref (hash-ref *variable-table* (car expr)) 
-                    (- (exact-round(eval-expr (cadr expr))) 1)))))
-           ;; else error
-           (else (die '("Error: Invalid expression.")))))
+                    (- (exact-round(eval-expr (cadr expr))) 1))
+                    ;; else error
+                    (die '("Error: Invalid expression.")))))))
 
 ;; finds labels
 (define (interpret-labels program)
