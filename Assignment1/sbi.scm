@@ -217,10 +217,11 @@
         (let ((object (read)))
             (cond [(eof-object? object) 
                 (begin
-                    (hash-set! *symbol-table* (eof) 1.0)
-                    (hash-set! *variable-table* (mems) NAN))]
-                [(number? object) (hash-set! *variable-table* (mems) (+ object 0.0))]
-                [else (hash-set! *variable-table* (mems) NAN)] ))
+                    (hash-set! *variable-table* (eof) 1.0)
+                    (hash-set! *variable-table* (car mems) NAN))]
+                [(number? object) (hash-set! *variable-table* (car mems) (+ object 0.0))]
+                [(symbol? object) (hash-set! *variable-table* (car mems) (+ object 0.0))]
+                [else (hash-set! *variable-table* (car mems) NAN)] ))
         interpret-input (cdr mems))) }
 
 ;; Given - defines run file (?)
