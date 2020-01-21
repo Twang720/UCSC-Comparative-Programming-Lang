@@ -195,7 +195,7 @@
 (define (interpret-input mems)
   (if (null? mems)
       (exit 1)
-  (exit 1))
+  (display "WIP"))
 )
 
 
