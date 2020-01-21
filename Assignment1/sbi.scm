@@ -87,13 +87,18 @@
           ;; if it's a pair, do this
           ((pair? expr) 
               ;; sets func to first value in f and looks it up in functions
-              (let ((func (hash-ref *function-table* (car expr) NAN))
+              (if (hash-has-key? *function-table* (car expr))
+                (let ((func (hash-ref *function-table* (car expr) NAN))
                     (opnds (map eval-expr (cdr expr))))
                    ;; if func is null, error, else apply it
                    (if (null? func) NAN 
-                       (apply func (map eval-expr opnds)))))
+                       (apply func (map eval-expr opnds))))
+                ;; finally, checks if its a vector
+                (if (hash-has-key? *array-table* (car expr))
+                  (vector-ref (hash-ref *variable-table* (car expr)) 
+                    (- (exact-round(eval-expr (cadr expr))) 1)))))
            ;; else error
-           (else NAN)))
+           (else (die '("Error: Invalid expression.")))))
 
 ;; finds labels
 (define (interpret-labels program)
