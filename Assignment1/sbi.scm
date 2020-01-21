@@ -159,7 +159,7 @@
 (define (interpret-let mem expr)
     (if (symbol? mem) 
         (hash-set! *variable-table* 
-                name (exact-round (eval-expr expr)))
+                mem (exact-round (eval-expr expr)))
         (if (and (vector? (cadr mem)) (> (vector-length (cadr mem)) ((caddr mem))) )
                 (vector-set! *array-table* (cadr mem) (caddr mem) (eval-expr expr))
                 (exit 1)
