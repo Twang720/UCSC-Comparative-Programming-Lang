@@ -181,18 +181,21 @@
 
 ;; <prints> is a list of printables 
 (define (interpret-print prints )
+    ;; checks if it is null, if so then newline
     (if (null? prints)
             (printf "~n")
+    ;; checks to see if first element is a string
     (if (string? car prints)
             (display car prints)
-        (display eval-expr (car prints)))
-    (interpret-print (cdr prints)))) 
+        ;; if not, then must be expression
+        (display eval-expr (car prints))))
+    (interpret-print (cdr prints))) 
 
 ;; first argument of the <mems> list is the key//address (?) rest are the values to store
 (define (interpret-input mems)
   if(null? mems)
       (exit 1)
-  ()
+  (exit 1)
 )
 
 
