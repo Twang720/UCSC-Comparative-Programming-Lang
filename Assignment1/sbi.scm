@@ -117,10 +117,12 @@
     (if (null? program)
         (exit 1)
         (   
-            (cond
-                ( (pair? (cadr (car program))) (identify-keyword (cadr (car program))) )
-                ( (pair? (caddr (car program))) (identify-keyword (caddr (car program))) )
-            )   
+        	(when (not (equal? (length (car program)) 1))
+            	(cond
+                	( (pair? (cadr (car program))) (identify-keyword (cadr (car program))) )
+                	( (pair? (caddr (car program))) (identify-keyword (caddr (car program))) )
+            	)   
+            )
              
             (interpret-program (cdr program))   
         )
