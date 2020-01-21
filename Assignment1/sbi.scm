@@ -187,7 +187,7 @@
     (if (null? prints)
             (printf "~n")
     ;; checks to see if first element is a string
-    (if (string? car prints)
+    (if (string? (car prints))
             (display car prints)
         ;; if not, then must be expression
         (display eval-expr (car prints))))
