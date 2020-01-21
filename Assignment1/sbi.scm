@@ -148,7 +148,7 @@
 ;; Creates a vector and puts it into array-table
 (define (interpret-dim var expr)
     (if (symbol? var)
-    (vector-set! *array-table* 
+    (hash-set! *array-table* 
             var (make-vector (exact-round (eval-expr expr)) 0.0))
     (exit 1)
     )
@@ -189,19 +189,19 @@
       (if (null? prints)
         (printf "~n")
         ;; checks if its a string
-
-            (if (string? (car prints))
-                (display (car prints))
-                ;; if not then must be expression
-            (display (eval-expr (car prints)))))
-      (when (not (null? prints))
-          (interpret-print (cdr prints))))
+        (begin
+        (if (string? (car prints))
+              (display (car prints))
+              ;; if not then must be expression
+              (display (eval-expr (car prints))))
+        (interpret-print (cdr prints)))))
 
 ;; first argument of the <mems> list is the key//address (?) rest are the values to store
 (define (interpret-input mems)
   (if (null? mems)
       (exit 1)
-  (display "WIP~n")))
+  (display "WIP"))
+)
 
 
 ;; Given - defines run file (?)
