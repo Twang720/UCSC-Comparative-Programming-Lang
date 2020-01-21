@@ -221,6 +221,16 @@
                     (hash-set! *variable-table* (car mems) NAN))]
                 [(number? object) (hash-set! *variable-table* (car mems) (+ object 0.0))]
                 [(symbol? object) (hash-set! *variable-table* (car mems) (+ object 0.0))]
+                [(pair? object) (
+                    (when (and (hash-has-key? *variable-table* 
+                        (car (car mems))) (<= (- (eval-expr (cadr (car mems))) 1)
+                        (vector-length (car (hash-ref *variable-table* 
+                        (car (car mems)))))))
+                    ;; set vector index to new value
+                    (begin 
+                        (vector-set! (hash-ref *variable-table* 
+                        (car (car mems))) 
+                        (- (eval-expr (cdr (car mems))) 1) x))))]
                 [else (hash-set! *variable-table* (car mems) NAN)] ))
         interpret-input (cdr mems))) }
 
