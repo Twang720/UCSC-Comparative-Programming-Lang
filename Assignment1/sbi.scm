@@ -210,13 +210,18 @@
         (when (not (null? prints))
           (interpret-print (cdr prints))))
 
-;; input function
-(define (interpret-input mems)
-  (if (null? mems)
-      (exit 1)
-  (display "WIP"))
-)
-
+;; reads nums in from input
+{define (interpret-input mems)
+    (when (not (null? mems))
+        (begin
+        (let ((object (read)))
+            (cond [(eof-object? object) 
+                (begin
+                    (hash-set! *symbol-table* (eof) 1.0)
+                    (hash-set! *variable-table* (mems) NAN))]
+                [(number? object) (hash-set! *variable-table* (mems) (+ object 0.0))]
+                [else (hash-set! *variable-table* (mems) NAN)] ))
+        interpret-input (cdr mems))) }
 
 ;; Given - defines run file (?)
 (define *run-file*
