@@ -126,7 +126,7 @@
                 (cond
                     ((pair? (cadr (car program))) 
                         (identify-keyword (cadr (car program))))
-                    ((pair? (caddr (car program))) 
+                    ((equal? (length (car program)) 3) 
                         (identify-keyword (caddr (car program))))
                 )   
             )
