@@ -179,9 +179,12 @@
 
 ;; Checks to see if the argslist expression is true, and goes to label if it is
 (define (interpret-if args label)
-    (when ((hash-ref *function-table* (car args))
+    (if (not (hash-ref *function-table* (car args)))
+      (die '("Error: relop not found"))
+    (if ((hash-ref *function-table* (car args))
       (eval-expr (cadr args)) (eval-expr (caddr args)))
-        (interpret-goto label)))
+        (interpret-goto label)
+    (printf "Expression did not return true.~n"))))
     
 ;; <prints> is a list of printables
 (define (interpret-print prints)
