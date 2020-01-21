@@ -103,7 +103,7 @@
 ;; finds labels
 (define (interpret-labels program)
         (when (not (null? program))
-                (when (!= (length (car program)) 1)
+                (when (not (equal? (length (car program)) 1))
                         (when (symbol? (cadr (car program)))
                                 (hash-set! *label-table* (cadr(car program)) program)
                         )   
@@ -193,9 +193,9 @@
 
 ;; first argument of the <mems> list is the key//address (?) rest are the values to store
 (define (interpret-input mems)
-  if(null? mems)
+  (if (null? mems)
       (exit 1)
-  (exit 1)
+  (exit 1))
 )
 
 
