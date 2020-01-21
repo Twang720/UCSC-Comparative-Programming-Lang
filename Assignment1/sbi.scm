@@ -113,16 +113,16 @@
 ;; Interpets file line-by-line
 (define (interpret-program program)
     (if (null? program)
-        (exit 0)
+        (exit 1)
         (   
                 (let statement (car program)
                         (cond
-                                ((equal? (length line) 2) (identify-keyword (cadr statement))
-                                ((equal? (length line) 3) (identify-keyword (caddr statement))
+                                ((equal? (length line) 2) (identify-keyword (cadr statement)))
+                                ((equal? (length line) 3) (identify-keyword (caddr statement)))
                         )   
                 )   
-                (interpret-program (cdr program))
-        )   
+                (interpret-program (cdr program))   
+        )
     )   
 )
 
@@ -187,7 +187,11 @@
     (interpret-print (cdr prints)))) 
 
 ;; first argument of the <mems> list is the key//address (?) rest are the values to store
-(define (interpret-input mems ))
+(define (interpret-input mems)
+  if(null? mems)
+      (exit 1)
+  ()
+)
 
 
 ;; Given - defines run file (?)
@@ -250,4 +254,3 @@
 
 ;; Given - runs main
 (main *arg-list*)
-
