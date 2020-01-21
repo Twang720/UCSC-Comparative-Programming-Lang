@@ -181,9 +181,7 @@
         (interpret-goto label)))
     
 ;; <prints> is a list of printables
-(define interpret-print
-  (lambda (prints)
-    (let print-next ((prints prints))
+(define (interpret-print prints)
       ;; checks if it is null, if so then newline
       (if (null? prints)
         (printf "~n")
@@ -193,7 +191,7 @@
               (display (car prints))
               ;; if not then must be expression
               (display (eval-expr (car prints))))
-        (print-next (cdr prints)))))))
+        (interpret-print (cdr prints)))))
 
 ;; first argument of the <mems> list is the key//address (?) rest are the values to store
 (define (interpret-input mems)
