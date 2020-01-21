@@ -215,15 +215,19 @@
     (when (not (null? mems))
         (begin
         (let ((object (read)))
-            (cond [(eof-object? object) 
+            (cond 
+                [(eof-object? object) 
                 (begin
                     (hash-set! *variable-table* (eof) 1.0)
                     (hash-set! *variable-table* (car mems) NAN))]
-                [(number? object) (hash-set! *variable-table* (car mems) (+ object 0.0))]
-                [(symbol? object) (hash-set! *variable-table* (car mems) (+ object 0.0))]
+                [(number? object) (hash-set! *variable-table* 
+                    (car mems) (+ object 0.0))]
+                [(symbol? object) (hash-set! *variable-table* 
+                    (car mems) (+ object 0.0))]
                 [(pair? object) (
                     (when (and (hash-has-key? *variable-table* 
-                        (car (car mems))) (<= (- (eval-expr (cadr (car mems))) 1)
+                        (car (car mems))) 
+                            (<= (- (eval-expr (cadr (car mems))) 1)
                         (vector-length (car (hash-ref *variable-table* 
                         (car (car mems)))))))
                     ;; set vector index to new value
