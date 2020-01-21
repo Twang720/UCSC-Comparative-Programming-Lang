@@ -89,7 +89,7 @@
           ((symbol? expr) (hash-ref *variable-table* expr NAN))
           ;; if it's a pair, do this
           ((pair? expr) 
-              ;; sets func to first value in f and looks it up in functions
+              ;; looks up function in function table
               (if (hash-has-key? *function-table* (car expr))
                 (let ((func (hash-ref *function-table* (car expr) NAN))
                     (opnds (map eval-expr (cdr expr))))
@@ -108,7 +108,8 @@
         (when (not (null? program))
                 (when (not (equal? (length (car program)) 1))
                         (when (symbol? (cadr (car program)))
-                                (hash-set! *label-table* (cadr(car program)) program)
+                                (hash-set! *label-table* 
+                                    (cadr(car program)) program)
                         )   
                 )   
                 (interpret-labels (cdr program) )
@@ -120,11 +121,13 @@
     (if (null? program)
         (exit 1)
         (   
-        	(when (not (equal? (length (car program)) 1))
-            	(cond
-                	( (pair? (cadr (car program))) (identify-keyword (cadr (car program))) )
-                	( (equal? (length (car program)) 3) (identify-keyword (caddr (car program))) )
-            	)   
+            (when (not (equal? (length (car program)) 1))
+                (cond
+                    ( (pair? (cadr (car program))) 
+                        (identify-keyword (cadr (car program))) )
+                    ( (equal? (length (car program)) 3) 
+                        (identify-keyword (caddr (car program))) )
+                )   
             )
              
             (interpret-program (cdr program))   
@@ -135,12 +138,19 @@
 ;; sorts statements to respective interpret functions
 (define (identify-keyword statement)
     (cond 
-        ((equal? (car statement) 'dim) (interpret-dim (cadr (cadr statement)) (caddr (cadr statement)) ))
-        ((equal? (car statement) 'let) (interpret-let (cadr statement) (caddr statement) ))
-        ((equal? (car statement) 'goto) (interpret-goto (cadr statement) ))
-        ((equal? (car statement) 'if) (interpret-if (cadr statement) (caddr statement) ))
-        ((equal? (car statement) 'print) (interpret-print (cdr statement) ))
-        ((equal? (car statement) 'input) (interpret-input (car statement) ))
+        ((equal? (car statement) 'dim) 
+            (interpret-dim (cadr (cadr statement)) 
+            (caddr (cadr statement)) ))
+        ((equal? (car statement) 'let) 
+            (interpret-let (cadr statement) (caddr statement) ))
+        ((equal? (car statement) 'goto) 
+            (interpret-goto (cadr statement) ))
+        ((equal? (car statement) 'if) 
+            (interpret-if (cadr statement) (caddr statement) ))
+        ((equal? (car statement) 'print) 
+            (interpret-print (cdr statement) ))
+        ((equal? (car statement) 'input) 
+            (interpret-input (car statement) ))
     )   
 )
 
@@ -160,8 +170,10 @@
     (if (symbol? mem) 
         (hash-set! *variable-table* 
                 mem (eval-expr expr))
-        (if (and (vector? (cadr mem)) (> (vector-length (cadr mem)) ((caddr mem))) )
-                (vector-set! *array-table* (cadr mem) (caddr mem) (eval-expr expr))
+        (if (and (vector? (cadr mem)) 
+            (> (vector-length (cadr mem)) ((caddr mem))) )
+                (vector-set! *array-table* 
+                    (cadr mem) (caddr mem) (eval-expr expr))
                 (exit 1)
             )   
     )   
@@ -177,14 +189,13 @@
             (interpret-program (hash-ref *label-table* label)) 
             (die '("Error: Label not found in label table.")))))
 
-;; Checks to see if the argslist expression is true, and goes to label if it is
+;; Checks to see if args are true
 (define (interpret-if args label)
     (if (not (hash-ref *function-table* (car args)))
       (die '("Error: relop not found"))
-    (if ((hash-ref *function-table* (car args))
+    (when ((hash-ref *function-table* (car args))
       (eval-expr (cadr args)) (eval-expr (caddr args)))
-        (interpret-goto label)
-    (printf "Expression did not return true.~n"))))
+        (interpret-goto label))))
     
 ;; <prints> is a list of printables
 (define (interpret-print prints)
@@ -199,7 +210,7 @@
         (when (not (null? prints))
           (interpret-print (cdr prints))))
 
-;; first argument of the <mems> list is the key//address (?) rest are the values to store
+;; input function
 (define (interpret-input mems)
   (if (null? mems)
       (exit 1)
