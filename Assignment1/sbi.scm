@@ -150,7 +150,7 @@
         ((equal? (car statement) 'print) 
             (interpret-print (cdr statement) ))
         ((equal? (car statement) 'input) 
-            (interpret-input (car statement) ))
+            (interpret-input (cdr statement) ))
     )   
 )
 
