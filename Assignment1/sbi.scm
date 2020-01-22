@@ -89,7 +89,6 @@
         ((symbol? expr) (hash-ref *variable-table* expr NAN))
         ;; if it's a pair, do this
         ((pair? expr) 
-            (printf "pair~n")
             ;; looks up function in function table
             (if (hash-has-key? *function-table* (car expr))
                 (let ((func (hash-ref *function-table* (car expr) NAN))
@@ -98,9 +97,9 @@
                     (if (null? func) NAN 
                         (apply func (map eval-expr opnds))))
                 ;; finally, checks if its a vector
-                (if (hash-has-key? *array-table* (car expr))
-                    (vector-ref (hash-ref *array-table* (car expr)) 
-                        (- (exact-round(cadr expr)) 1))
+                (if (hash-has-key? *array-table* (cadr expr))
+                    (vector-ref (hash-ref *array-table* (cadr expr)) 
+                        (exact-round(eval-expr (caddr expr))))
                 ;; else error
                 (die '("Error: Invalid expression.")))))
         (else (printf "none of the above~n"))))
@@ -172,10 +171,13 @@
     (if (symbol? mem) 
         (hash-set! *variable-table* 
                 mem (eval-expr expr))
-        (if (and (symbol? (cadr mem))  (not (null? (hash-ref *array-table* (cadr mem)))) )
-            ;;(and (symbol? (cadr mem)) (> (vector-length (caddr mem) (eval-expr expr)) )) 
+        (if (and (symbol? (cadr mem)) 
+            (not (null? (hash-ref *array-table* (cadr mem)))) )
+            ;;(and (symbol? (cadr mem)) 
+            ;;(> (vector-length (caddr mem) (eval-expr expr)) )) 
                 (vector-set! (hash-ref *array-table* (cadr mem)) 
-                    (exact-round (eval-expr (caddr mem))) (eval-expr expr))
+                    (exact-round 
+                        (eval-expr (caddr mem))) (eval-expr expr))
                 (exit 1)
             )   
     )   
@@ -207,12 +209,10 @@
         ;; checks if its a string
         (if (string? (car prints))
             (display (car prints))
-            ;; if not then must be expression
-            (if (equal? (car prints) "asub")
-                (begin
-                    (printf "asub")
-                (interpret-print (cdr prints)))
-            (display (eval-expr (car prints))))))
+        ;; if not then must be expression
+        (begin
+            (display (eval-expr (car prints)))
+            (printf " "))))
     (when (not (null? prints))
         (interpret-print (cdr prints))))
 
@@ -227,8 +227,9 @@
                     (hash-set! *variable-table* eof 1.0)
                     (hash-set! *variable-table* (car mems) NAN)
                     (exit 1))]
-                [(number? object) (hash-set! *variable-table* 
-                    (car mems) (eval-expr object))]
+                [(number? object)
+                    (begin
+                    (hash-set! *variable-table* (car mems) (eval-expr object)))]
                 [(pair? object) (
                     (when (and (hash-has-key? *variable-table* 
                         (car (car mems))) 
@@ -245,7 +246,7 @@
                     (printf "Error: invalid expression.~n")
                     (hash-set! *variable-table* (car mems) NAN)
                     (exit 1))] ))
-        interpret-input (cdr mems))) }
+        (interpret-input (cdr mems)))) }
 
 ;; Given - defines run file (?)
 (define *run-file*
