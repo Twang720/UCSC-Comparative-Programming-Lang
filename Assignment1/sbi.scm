@@ -210,9 +210,7 @@
         (if (string? (car prints))
             (display (car prints))
         ;; if not then must be expression
-        (begin
-            (display (eval-expr (car prints)))
-            (printf " "))))
+        (display (eval-expr (car prints)))))
     (when (not (null? prints))
         (interpret-print (cdr prints))))
 
@@ -228,8 +226,8 @@
                     (hash-set! *variable-table* (car mems) NAN)
                     (exit 1))]
                 [(number? object)
-                    (begin
-                    (hash-set! *variable-table* (car mems) (eval-expr object)))]
+                    (hash-set! 
+                        *variable-table* (car mems) (eval-expr object))]
                 [(pair? object) (
                     (when (and (hash-has-key? *variable-table* 
                         (car (car mems))) 
