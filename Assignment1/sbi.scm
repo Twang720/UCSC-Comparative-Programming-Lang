@@ -55,6 +55,7 @@
            (sqrt , sqrt)
            (tan , tan)
            (truncate , truncate)
+           (asub , vector-ref)
       )
 )
 
@@ -98,8 +99,8 @@
                        (apply func (map eval-expr opnds))))
                 ;; finally, checks if its a vector
                 (if (hash-has-key? *array-table* (car expr))
-                  (vector-ref (hash-ref *variable-table* (car expr)) 
-                    (- (exact-round(eval-expr (cadr expr))) 1))
+                  (vector-ref (hash-ref *array-table* (car expr)) 
+                    (- (exact-round(cadr expr)) 1))
                     ;; else error
                     (die '("Error: Invalid expression.")))))))
 
@@ -167,13 +168,14 @@
 
 ;; let func
 (define (interpret-let mem expr)
+    (print "let")
     (if (symbol? mem) 
         (hash-set! *variable-table* 
                 mem (eval-expr expr))
-        (if (and (vector? (cadr mem)) 
-            (> (vector-length (cadr mem)) ((caddr mem))) )
-                (vector-set! *array-table* 
-                    (cadr mem) (caddr mem) (eval-expr expr))
+        (if (and (symbol? (cadr mem))  (not (null? (hash-ref *array-table* (cadr mem)))) )
+            ;;(and (symbol? (cadr mem)) (> (vector-length (caddr mem) (eval-expr expr)) )) 
+                (vector-set! (hash-ref *array-table* (cadr mem)) 
+                    (exact-round (eval-expr (caddr mem))) (eval-expr expr))
                 (exit 1)
             )   
     )   
@@ -199,14 +201,18 @@
     
 ;; <prints> is a list of printables
 (define (interpret-print prints)
+    (printf "hey~n")
       ;; checks if it is null, if so then newline
       (if (null? prints)
-        (printf "~n")
+        (begin
+        (printf "hi there~n"))
         ;; checks if its a string
         (if (string? (car prints))
               (display (car prints))
               ;; if not then must be expression
-              (display (eval-expr (car prints)))))
+              (begin
+                (printf "hi~n")
+              (display (eval-expr (car prints))))))
         (when (not (null? prints))
           (interpret-print (cdr prints))))
 
@@ -218,12 +224,11 @@
             (cond 
                 [(eof-object? object) 
                 (begin
-                    (hash-set! *variable-table* (eof) 1.0)
-                    (hash-set! *variable-table* (car mems) NAN))]
+                    (hash-set! *variable-table* eof 1.0)
+                    (hash-set! *variable-table* (car mems) NAN)
+                    (exit 1))]
                 [(number? object) (hash-set! *variable-table* 
-                    (car mems) (+ object 0.0))]
-                [(symbol? object) (hash-set! *variable-table* 
-                    (car mems) (+ object 0.0))]
+                    (car mems) (eval-expr object))]
                 [(pair? object) (
                     (when (and (hash-has-key? *variable-table* 
                         (car (car mems))) 
@@ -235,7 +240,11 @@
                         (vector-set! (hash-ref *variable-table* 
                         (car (car mems))) 
                         (- (eval-expr (cdr (car mems))) 1) x))))]
-                [else (hash-set! *variable-table* (car mems) NAN)] ))
+                [else 
+                    (begin
+                    (printf "Error: invalid expression.~n")
+                    (hash-set! *variable-table* (car mems) NAN)
+                    (exit 1))] ))
         interpret-input (cdr mems))) }
 
 ;; Given - defines run file (?)
