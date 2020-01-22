@@ -212,7 +212,9 @@
         ;; if not then must be expression
         (display (eval-expr (car prints)))))
     (when (not (null? prints))
-        (interpret-print (cdr prints))))
+        (begin 
+            (printf " ")
+            (interpret-print (cdr prints)))))
 
 ;; reads nums in from input
 {define (interpret-input mems)
