@@ -55,7 +55,6 @@
            (sqrt , sqrt)
            (tan , tan)
            (truncate , truncate)
-           (asub , vector-ref)
       )
 )
 
@@ -84,25 +83,27 @@
 ;; evaluates the expression
 (define (eval-expr expr)
     (cond 
-          ;; if it's a num, return num
-          ((number? expr) (+ expr 0.0))
-          ;; if it's a symbol in variable-table, return that
-          ((symbol? expr) (hash-ref *variable-table* expr NAN))
-          ;; if it's a pair, do this
-          ((pair? expr) 
-              ;; looks up function in function table
-              (if (hash-has-key? *function-table* (car expr))
+        ;; if it's a num, return num
+        ((number? expr) (+ expr 0.0))
+        ;; if it's a symbol in variable-table, return that
+        ((symbol? expr) (hash-ref *variable-table* expr NAN))
+        ;; if it's a pair, do this
+        ((pair? expr) 
+            (printf "pair~n")
+            ;; looks up function in function table
+            (if (hash-has-key? *function-table* (car expr))
                 (let ((func (hash-ref *function-table* (car expr) NAN))
                     (opnds (map eval-expr (cdr expr))))
-                   ;; if func is null, error, else apply it
-                   (if (null? func) NAN 
-                       (apply func (map eval-expr opnds))))
+                    ;; if func is null, error, else apply it
+                    (if (null? func) NAN 
+                        (apply func (map eval-expr opnds))))
                 ;; finally, checks if its a vector
                 (if (hash-has-key? *array-table* (car expr))
-                  (vector-ref (hash-ref *array-table* (car expr)) 
-                    (- (exact-round(cadr expr)) 1))
-                    ;; else error
-                    (die '("Error: Invalid expression.")))))))
+                    (vector-ref (hash-ref *array-table* (car expr)) 
+                        (- (exact-round(cadr expr)) 1))
+                ;; else error
+                (die '("Error: Invalid expression.")))))
+        (else (printf "none of the above~n"))))
 
 ;; finds labels
 (define (interpret-labels program)
@@ -168,7 +169,6 @@
 
 ;; let func
 (define (interpret-let mem expr)
-    (print "let")
     (if (symbol? mem) 
         (hash-set! *variable-table* 
                 mem (eval-expr expr))
@@ -201,20 +201,20 @@
     
 ;; <prints> is a list of printables
 (define (interpret-print prints)
-    (printf "hey~n")
-      ;; checks if it is null, if so then newline
-      (if (null? prints)
-        (begin
-        (printf "hi there~n"))
+    ;; checks if it is null, if so then newline
+    (if (null? prints)
+        (printf "~n")
         ;; checks if its a string
         (if (string? (car prints))
-              (display (car prints))
-              ;; if not then must be expression
-              (begin
-                (printf "hi~n")
-              (display (eval-expr (car prints))))))
-        (when (not (null? prints))
-          (interpret-print (cdr prints))))
+            (display (car prints))
+            ;; if not then must be expression
+            (if (equal? (car prints) "asub")
+                (begin
+                    (printf "asub")
+                (interpret-print (cdr prints)))
+            (display (eval-expr (car prints))))))
+    (when (not (null? prints))
+        (interpret-print (cdr prints))))
 
 ;; reads nums in from input
 {define (interpret-input mems)
