@@ -21,6 +21,14 @@ let _ = List.iter (fun (label, value) ->
                   Hashtbl.add unary_fn_table label value)
                  ["+"    , (~+.);
                   "-"    , (~-.);
+                  "*"    , (~*.);
+                  "/"    , (~/.);
+                  "="    , (~=.);
+                  "<"    , (~<.);
+                  ">"    , (~>.);
+                  "!="   , (~!=.);
+                  ">="   , (~>=.);
+                  "<="   , (~<=.);
                   "abs"  , abs_float;
                   "acos" , acos;
                   "asin" , asin;
@@ -65,4 +73,3 @@ let dump_label_table () =
           Printf.fprintf stderr
               "label_table: \"%s\" -> line %d\n%!" key line
     in Hashtbl.iter dump label_table
-
