@@ -29,6 +29,14 @@ let rec interpret (program : Absyn.program) = match program with
       | _, _, None -> interpret continuation
       | _, _, Some stmt -> (interp_stmt stmt continuation)
 
+let rec interpret_labels (program : Absyn.program) = match program with
+    | [] -> ()
+    | firstline::continuation -> match firstline with
+      | _, _, None -> interpret_labels continuation
+      | _, _, Some label -> ((Hashtbl.add Table.label_table label program)
+                            (interpret_labels continuation))
+      | _, _, Some stmt -> interpret_labels continuation
+
 and interp_stmt (stmt : Absyn.stmt) (continuation : Absyn.program) =
     match stmt with
     | Dim (ident, expr) -> interp_dim (ident, expr) continuation
@@ -94,4 +102,5 @@ let interpret_program program =
     (Tables.init_label_table program; 
      if !want_dump then Tables.dump_label_table ();
      if !want_dump then Dumper.dump_program program;
+     interpret_labels program
      interpret program)
