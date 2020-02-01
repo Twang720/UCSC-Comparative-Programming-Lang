@@ -16,19 +16,21 @@ let _ = List.iter (fun (label, value) ->
 
 let array_table : array_table_t = Hashtbl.create 16
 
+let boolean_fn_table : boolean_fn_table_t = Hashtbl.create 16
+let _ = List.iter (fun (label, value) ->
+                  Hashtbl.add unary_fn_table label value)
+				 ["="    , (~=.);
+                  "<"    , (~<.);
+                  ">"    , (~>.);
+                  "<>"   , (~<>.);
+                  ">="   , (~>=.);
+                  "<="   , (~<=.)]
+
 let unary_fn_table : unary_fn_table_t = Hashtbl.create 16
 let _ = List.iter (fun (label, value) ->
                   Hashtbl.add unary_fn_table label value)
                  ["+"    , (~+.);
                   "-"    , (~-.);
-                  "*"    , (~*.);
-                  "/"    , (~/.);
-                  "="    , (~=.);
-                  "<"    , (~<.);
-                  ">"    , (~>.);
-                  "!="   , (~!=.);
-                  ">="   , (~>=.);
-                  "<="   , (~<=.);
                   "abs"  , abs_float;
                   "acos" , acos;
                   "asin" , asin;
