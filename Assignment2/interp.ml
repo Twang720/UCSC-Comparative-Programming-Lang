@@ -12,16 +12,23 @@ let want_dump = ref false
 let rec eval_expr (expr : Absyn.expr) : float = match expr with
     | Number number -> number
     | Memref memref -> match memref with
-        | Variable variable -> Hashtbl.find Table.variable_table variable
-        | Arrayref arrayref::x::xs -> Hashtbl.find Table.array_table x xs
+        | Variable variable -> 
+            Hashtbl.find Table.variable_table variable
+        | Arrayref arrayref::x::xs -> 
+            Hashtbl.find Table.array_table x xs
     | Unary (oper, expr) -> let value = eval_expr expr 
-                                in Hashtbl.find Tables.unary_fn_table oper value
+                                in Hashtbl.find
+                                    Tables.unary_fn_table oper value
     | Binary (oper, expr1, expr2) -> let value1 = eval_expr expr1
                                          value2 = eval_expr expr2
-                                            in Hashtbl.find Tables.binary_fn_table oper value1 value2
+                                            in Hashtbl.find 
+                                                Tables.binary_fn_table
+                                                oper value1 value2
     | Boolean (oper, expr1, expr2) -> let value1 = eval_expr expr1 
                                           value2 = eval_expr expr2 
-                                            in Hashtbl.find Tables.boolean_fn_table oper value1 value2
+                                            in Hashtbl.find
+                                                Tables.boolean_fn_table 
+                                                oper value1 value2
 
 let rec interpret (program : Absyn.program) = match program with
     | [] -> ()
@@ -33,7 +40,8 @@ let rec interpret_labels (program : Absyn.program) = match program with
     | [] -> ()
     | firstline::continuation -> match firstline with
       | _, _, None -> interpret_labels continuation
-      | _, _, Some label -> ((Hashtbl.add Table.label_table label program)
+      | _, _, Some label -> ((Hashtbl.add 
+                                Table.label_table label program)
                             (interpret_labels continuation))
       | _, _, Some stmt -> interpret_labels continuation
 
@@ -48,14 +56,18 @@ and interp_stmt (stmt : Absyn.stmt) (continuation : Absyn.program) =
 
 and interp_dim (ident, expr)
                  (continuation : Absyn.program) =
-    Hashtbl.add Tables.array_table ident (Array.make (to_int(eval_expr expr)) 0.0)
+    Hashtbl.add Tables.array_table ident 
+        (Array.make (to_int(eval_expr expr)) 0.0)
     interpret continuation
 
 and interp_let (memref, expr)
                  (continuation : Absyn.program) = match memref with
-    | Variable variable -> Hashtbl.add Table.variable_table variable (eval_expr expr)
-    | Arrayref arrayref::x::xs -> try let value = Hashtbl.find Table.array_table x
-                                      in Array.set value xs (eval_expr expr)
+    | Variable variable -> Hashtbl.add
+        Table.variable_table variable (eval_expr expr)
+    | Arrayref arrayref::x::xs -> 
+        try let value = Hashtbl.find Table.array_table x
+                                      in Array.set value xs 
+                                          (eval_expr expr)
                                   with Not_found -> (exit 1)
     interpret continuation
 

@@ -478,7 +478,8 @@ let yyact = [|
     let _1 = (Parsing.peek_val __caml_parser_env 0 : string) in
     Obj.repr(
 # 70 "parser.mly"
-                                      (Absyn.Number (float_of_string _1))
+                                      (Absyn.Number 
+                                          (float_of_string _1))
 # 483 "parser.ml"
                : 'primary))
 ; (fun __caml_parser_env ->
@@ -497,7 +498,8 @@ let yyact = [|
 # 498 "parser.ml"
                : 'primary))
 (* Entry program *)
-; (fun __caml_parser_env -> raise (Parsing.YYexit (Parsing.peek_val __caml_parser_env 0)))
+; (fun __caml_parser_env -> raise 
+    (Parsing.YYexit (Parsing.peek_val __caml_parser_env 0)))
 |]
 let yytables =
   { Parsing.actions=yyact;
