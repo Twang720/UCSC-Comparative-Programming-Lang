@@ -56,7 +56,7 @@ and interp_stmt (stmt : Absyn.stmt) (continuation : Absyn.program) =
 
 and interp_dim (ident, expr)
                  (continuation : Absyn.program) =
-    Hashtbl.add Tables.array_table ident 
+    Hashtbl.add Tables.array_table ident
         (Array.make (to_int(eval_expr expr)) 0.0)
     interpret continuation
 
@@ -64,23 +64,22 @@ and interp_let (memref, expr)
                  (continuation : Absyn.program) = match memref with
     | Variable variable -> Hashtbl.add
         Table.variable_table variable (eval_expr expr)
-    | Arrayref arrayref::x::xs -> 
+    | Arrayref arrayref::x::xs ->
         try let value = Hashtbl.find Table.array_table x
-                                      in Array.set value xs 
+                                      in Array.set value xs
                                           (eval_expr expr)
                                   with Not_found -> (exit 1)
     interpret continuation
 
 and interp_goto label
-                 (continuation : Absyn.program) = 
-    try let value = Hashtbl.find Table.label_table label
-        interpret value
+                 (continuation : Absyn.program) =
+    let value = try Hashtbl.find Table.label_table label interpret value
     with Not_found -> (exit 1)
     interpret continuation
 
 and interp_if (expr::x::xs, label)
                  (continuation : Absyn.program) =
-    try let value = Hashtbl.find Table.function_table expr
+    try let value = Hashtbl.find Table.function_table expr in
         if value x xs
         then interp_goto label
     with Not_found -> (exit 1)
@@ -99,19 +98,18 @@ and interp_print (print_list : Absyn.printable list)
     in (List.iter print_item print_list; print_newline ());
     interpret continuation
 
-
 and interp_input (memref_list : Absyn.memref list)
                  (continuation : Absyn.program)  =
     let input_number memref =
         try  let number = Etc.read_number ()
              in (print_float number; print_newline ())
-        with End_of_file -> 
+        with End_of_file ->
              (print_string "End_of_file"; print_newline ())
     in List.iter input_number memref_list;
     interpret continuation
 
-let interpret_program program =
-    (Tables.init_label_table program; 
+and interpret_program program =
+    (Tables.init_label_table program;
      if !want_dump then Tables.dump_label_table ();
      if !want_dump then Dumper.dump_program program;
      interpret_labels program

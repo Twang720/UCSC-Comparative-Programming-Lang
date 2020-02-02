@@ -6,6 +6,7 @@ type boolean_fn_table = (string, float -> float -> bool) Hashtbl.t
 type unary_fn_table_t = (string, float -> float) Hashtbl.t
 type binary_fn_table_t = (string, float -> float -> float) Hashtbl.t
 type label_table_t = (string, Absyn.program) Hashtbl.t
+type boolean_fn_table_t = (string, float -> float -> bool) Hashtbl.t
 
 let variable_table : variable_table_t = Hashtbl.create 16
 let _ = List.iter (fun (label, value) ->
@@ -16,16 +17,6 @@ let _ = List.iter (fun (label, value) ->
                   "nan", nan]
 
 let array_table : array_table_t = Hashtbl.create 16
-
-let boolean_fn_table : boolean_fn_table_t = Hashtbl.create 16
-let _ = List.iter (fun (label, value) ->
-                  Hashtbl.add unary_fn_table label value)
-				 ["="    , (~=.);
-                  "<"    , (~<.);
-                  ">"    , (~>.);
-                  "<>"   , (~<>.);
-                  ">="   , (~>=.);
-                  "<="   , (~<=.)]
 
 let unary_fn_table : unary_fn_table_t = Hashtbl.create 16
 let _ = List.iter (fun (label, value) ->
@@ -47,6 +38,18 @@ let _ = List.iter (fun (label, value) ->
                   "sin"  , sin;
                   "sqrt" , sqrt;
                   "tan"  , tan]
+
+
+let boolean_fn_table : boolean_fn_table_t = Hashtbl.create 16
+let _ = List.iter (fun (label, value) ->
+                  Hashtbl.add boolean_fn_table label value)
+                 ["="    , (==);
+                  "!="   , (!=);
+                  "<"    , (<);
+                  ">"    , (>);
+                  "<>"   , (<>);
+                  ">="   , (>=);
+                  "<="   , (<=)]
 
 let binary_fn_table : binary_fn_table_t = Hashtbl.create 16
 let _ = List.iter (fun (label, value) ->
