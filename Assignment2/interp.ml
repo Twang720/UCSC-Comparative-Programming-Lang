@@ -15,7 +15,8 @@ let rec eval_expr (expr : Absyn.expr) : float = match expr with
         | Variable ident -> 
             Hashtbl.find Tables.variable_table ident
         | Arrayref (ident, expr) -> 
-            Array.get (Hashtbl.find Tables.array_table ident) (Float.to_int (eval_expr expr)))
+            Array.get (Hashtbl.find Tables.array_table ident) 
+                (Float.to_int (eval_expr expr)))
     | Unary (oper, expr) -> let value = eval_expr expr 
                                 in Hashtbl.find
                                     Tables.unary_fn_table oper value
@@ -49,11 +50,14 @@ and interp_dim (ident, expr)
 and interp_let (memref, expr)
                  (continuation : Absyn.program) = match memref with
     | Variable ident -> (Hashtbl.add 
-        Tables.variable_table ident (eval_expr expr); (interpret continuation) )
+        Tables.variable_table ident (eval_expr expr); 
+            (interpret continuation) )
     | Arrayref (ident, x) ->
         try let value = Hashtbl.find Tables.array_table ident
-                            in (Array.set value (Float.to_int (eval_expr x))
-                                (eval_expr expr); (interpret continuation))
+                            in (Array.set value 
+                                (Float.to_int (eval_expr x))
+                                (eval_expr expr); 
+                                (interpret continuation))
         with Not_found -> (exit 1);
 
 and interp_goto label
@@ -67,7 +71,8 @@ and interp_if (expr, label)
     | Binary (oper, expr1, expr2) -> 
         try let value = Hashtbl.find Tables.boolean_fn_table oper in
             if value (eval_expr expr1) (eval_expr expr2)
-                then (try let value = Hashtbl.find Tables.label_table label 
+                then (try let value = 
+                    Hashtbl.find Tables.label_table label 
                           in interpret value
                       with Not_found -> (exit 1))
                 else interpret continuation
