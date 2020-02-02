@@ -43,10 +43,11 @@ let _ = List.iter (fun (label, value) ->
 let boolean_fn_table : boolean_fn_table_t = Hashtbl.create 16
 let _ = List.iter (fun (label, value) ->
                   Hashtbl.add boolean_fn_table label value)
-                 ["="    , (==);
-                  "!="   , (!=);
+                 ["="    , (=);
+                  "=="   , (==);
                   "<"    , (<);
                   ">"    , (>);
+                  "!="   , (<>);
                   "<>"   , (<>);
                   ">="   , (>=);
                   "<="   , (<=)]
