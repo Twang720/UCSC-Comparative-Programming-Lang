@@ -4,6 +4,7 @@
 use strict;
 use warnings;
 use diagnostics;
+use Getopt::Std;
 
 my %strsignal = (
     1 => "Hangup",
@@ -46,25 +47,8 @@ $SIG{'__WARN__'} = sub { note @_; $EXITCODE = 1; };
 $SIG{'__DIE__'} = sub { warn @_; exit; };
 
 (my $USAGE = <<__END_USAGE__) =~ s/^#[ ]?//gm;
-#
-# NAME
-#    $0 - getopts example
-#
-# SYNOPSIS
-#    $0 [-abcopq] [file...]
-#
-# DESCRIPTION
-#    Illustrates the use of getopts.
-#
-# OPTIONS
-#    -h    print help and exit
-#    -abc  flags not requiring options
-#    -opq  flags requiring arguments
-#
-# $RCSID
 __END_USAGE__
 
-use Getopt::Std;
 my %OPTS;
 getopts ("abcho:p:q:", \%OPTS);
 print $USAGE and exit if $OPTS{'h'};
