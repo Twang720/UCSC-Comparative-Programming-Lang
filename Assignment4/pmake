@@ -70,10 +70,23 @@ sub parse_dep ($) {
    return $target, \@dependencies;
 }
 
-my %graph;
+#read inputs
+open(my $fh, '<', "Makefile")
+   or die "Can't open < Makefile: $!";
+
+my @input
+while(my $line = <$fh>){
+   chomp($line);
+
+   push @input, $line;
+}
+
+my %macros;
 for my $input (@inputs) {
    my ($target, $deps) = parse_dep $input;
    print "$0: syntax error: $input\n" and next unless defined $target;
-   $graph{$target} = $deps;
+   $macros{$target} = $deps;
 }
+
+
 
