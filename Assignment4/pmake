@@ -69,3 +69,11 @@ sub parse_dep ($) {
    my @dependencies = split m/\s+/, $dependency;
    return $target, \@dependencies;
 }
+
+my %graph;
+for my $input (@inputs) {
+   my ($target, $deps) = parse_dep $input;
+   print "$0: syntax error: $input\n" and next unless defined $target;
+   $graph{$target} = $deps;
+}
+
