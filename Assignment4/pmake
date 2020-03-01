@@ -39,48 +39,54 @@ my %strsignal = (
 
 my %macro_table;
 my %target_table;
+my %command_table;
 my @macros;
 my @targets;
+my @commands;
+my $last_target;
 
-$0 =~ s|^(.*/)?([^/]+)/*$|$2|;
-my $EXITCODE = 0;
-END{ exit $EXITCODE; }
-sub note(@) { print STDERR "$0: @_"; };
-$SIG{'__WARN__'} = sub { note @_; $EXITCODE = 1; };
-$SIG{'__DIE__'} = sub { warn @_; exit; };
+# mtime.perl subroutines to find time
+#sub mtime ($) {
+#    my ($filename) = @_;
+#   my @stat = stat $filename;
+#   return @stat ? $stat[9] : undef;
+#}
 
-(my $USAGE = <<__END_USAGE__) =~ s/^#[ ]?//gm;
-__END_USAGE__
-
-my %OPTS;
-getopts ("abcho:p:q:", \%OPTS);
-print $USAGE and exit if $OPTS{'h'};
-
-print "$0: -$_ = $OPTS{$_}\n" for sort keys %OPTS;
-print "$0: ARGV[$_]=$ARGV[$_]\n" for 0 .. $#ARGV;
-
-my $term_signal = $? & 0x7F;
-my $core_dumped = $? & 0x80;
-my $exit_status = ($? >> 8) & 0xFF;
+#sub fileinfo ($) {
+#   my ($filename) = @_;
+#   my $mtime = mtime $filename;
+#   print "$filename: ";
+#   if (defined $mtime) {print strftime "%c\n", localtime $mtime}
+#   else {print "$!\n"}
+#   return $mtime;
+#}
 
 #read inputs
 open(my $fh, '<', "Makefile") or die "Can't open < Makefile: $!";
 while (my $line = <$fh>) {
     chomp($line);
     my $ishash = substr($line, 0, 1);
+    my @temp_cmds;
     if (($ishash ne "#")) {
     	if ($line =~ /\t/) {
-    		# immplement cmd line handling
+            push @temp_cmds, $line;
     	} elsif ($line =~ /=/) {
     		push @macros, $line;
-    	} elsif ($line =~ /:/) {
-    		# immplement time stamps and % handling
+    	} elsif ($line =~ m/^(\S+)\s*:\s*(.*?)\s*$/) {
+    		# implement time stamps and % handling
+            if($last_target)
+            {
+                $command_table{$last_target} = @temp_cmds;
+                @temp_cmds = undef;
+            }
     		push @targets, $line;
+            $last_target = $1;
     	}
     }
 }
-close $file;
+close $fh;
 
+# split macros
 sub parse_macros ($) {
     my ($line) = @_;
     return undef unless $line =~ m/^(\S+)\s*=\s*(.*?)\s*$/;
@@ -91,10 +97,11 @@ sub parse_macros ($) {
 
 for my $m (@macros) {
     my ($var, $val) = parse_macros $m;
-    print "$0: syntax error: $input\n" and next unless defined $var;
+    print "$0: syntax error: $m\n" and next unless defined $var;
     $macro_table{$var} = $val;
 }
 
+# split dependencies
 sub parse_dep ($) {
     my ($line) = @_;
     return undef unless $line =~ m/^(\S+)\s*:\s*(.*?)\s*$/;
@@ -108,23 +115,54 @@ sub parse_dep ($) {
     return $target, \@deps;
 }
 
+for my $t (@targets) {
+    my ($target, @deps) = parse_dep $t;
+    print "$0: syntax error: $t\n" and next unless defined $target;
+    $target_table{$target} = \@deps;
+}
+
+# replace macros, recursively if needed
 sub unpacker ($) {
-	my @results;
-	if(substr ($_, 0, 1) ne "\$") {
-		return $_;
-	} 
-	my $temp = substr($_, 2, (length($_)-3));
-    @value = $macro_table{$temp};
-	foreach $v (@value) {
-		push(@results, (unpacker $v));
-	}
+    my ($macro, $target, $dependency) = $_;
+    my @results;
+    if($macro) {
+        if(substr ($macro, 0, 1) ne "\$") {
+            return $macro;
+        }
+        elsif (substr ($macro, 1, 1) eq "\$") {
+            return \$;
+        }
+        elsif (substr ($macro, 1, 1) eq "<") {
+            return $dependency;
+        }
+        elsif (substr ($macro, 1, 1) eq "@") {
+            return $target;
+        }
+        else
+        {
+            my $temp = substr($macro, 2, (length($_)-3));
+            my @value = $macro_table{$temp};
+            foreach my $v (@value) {
+                push(@results, (unpacker $v));
+            }
+        }
+    }
     return @results;
 }
 
-for my $t (@targets) {
-    my ($target, $deps) = parse_dep $t;
-    print "$0: syntax error: $input\n" and next unless defined $target;
-    foreach $tar (@$target) {
-        $target_table{$tar} = $deps;
+# execute commands
+for my $target (keys %command_table)
+{
+    # check to make sure that @ is not first char
+    print " \"$_\"" for @$target;
+    system @$target;
+    
+    my $term_signal = $? & 0x7F;
+    my $core_dumped = $? & 0x80;
+    my $exit_status = ($? >> 8) & 0xFF;
+    # also check to make sure - is not first char
+    if($exit_status != 0)
+    {
+        die "[Makefile: $target] Error $exit_status";
     }
 }
