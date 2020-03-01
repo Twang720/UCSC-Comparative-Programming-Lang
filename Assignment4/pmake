@@ -37,8 +37,6 @@ my %strsignal = (
    31 => "Bad system call",
 );
 
-my %macros = ();
-
 $0 =~ s|^(.*/)?([^/]+)/*$|$2|;
 my $EXITCODE = 0;
 END{ exit $EXITCODE; }
@@ -56,36 +54,69 @@ print $USAGE and exit if $OPTS{'h'};
 print "$0: -$_ = $OPTS{$_}\n" for sort keys %OPTS;
 print "$0: ARGV[$_]=$ARGV[$_]\n" for 0 .. $#ARGV;
 
-
-
 my $term_signal = $? & 0x7F;
 my $core_dumped = $? & 0x80;
 my $exit_status = ($? >> 8) & 0xFF;
 
-sub parse_dep ($) {
-   my ($line) = @_;
-   return undef unless $line =~ m/^(\S+)\s*:\s*(.*?)\s*$/;
-   my ($target, $dependency) = ($1, $2);
-   my @dependencies = split m/\s+/, $dependency;
-   return $target, \@dependencies;
-}
-
 #read inputs
 open(my $fh, '<', "Makefile")
-   or die "Can't open < Makefile: $!";
+    or die "Can't open < Makefile: $!";
 
-my @input
+my @input;
 while(my $line = <$fh>){
-   chomp($line);
+    chomp($line);
+    
+    push @input, $line;
+}
 
-   push @input, $line;
+sub parse_macros ($) {
+    my ($line) = @_;
+    return undef unless $line =~ m/^(\S+)\s*=\s*(.*?)\s*$/;
+    my ($macro, $definition) = ($1, $2);
+    my @definitions = split m/\s+/, $definition;
+    for($i = 0; $i < @definitions; $i++)
+    {
+        if(substr (@definitions[$i], 0, 1) eq \$)
+        {
+            my $temp;
+            ($temp, @definitions[$i]) = parse_macros(@definitions[$i]);
+        }
+    }
+    return $macro, \@definitions;
 }
 
 my %macros;
+for my $m (@macro) {
+    my ($var, $val) = parse_macros $m;
+    print "$0: syntax error: $input\n" and next unless defined $var;
+    $macros{$var} = $val;
+}
+
+sub parse_dep ($) {
+    my ($line) = @_;
+    return undef unless $line =~ m/^(\S+)\s*:\s*(.*?)\s*$/;
+    my ($target, $dependency) = ($1, $2);
+    my @dependencies = split m/\s+/, $dependency;
+    if(substr ($target, 0, 1) eq \$)
+    {
+        my $temp = substr $target, 2, (length $target) - 3;
+        $target = $macros{$temp};
+    }
+    for my @dep (@dependencies) {
+        if(substr (@dep[0], 0, 1) eq \$)
+        {
+            my $temp = substr $dep, 2, (length $dep) - 3;
+            @dep = $macros{$temp};
+        }
+    }
+    return $target, \@dependencies;
+}
+
+my %targets;
 for my $input (@inputs) {
    my ($target, $deps) = parse_dep $input;
    print "$0: syntax error: $input\n" and next unless defined $target;
-   $macros{$target} = $deps;
+   $targets{$target} = $deps;
 }
 
 
