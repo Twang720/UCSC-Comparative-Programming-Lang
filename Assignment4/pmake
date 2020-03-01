@@ -37,6 +37,11 @@ my %strsignal = (
    31 => "Bad system call",
 );
 
+my %macro_table;
+my %target_table;
+my @macros;
+my @targets;
+
 $0 =~ s|^(.*/)?([^/]+)/*$|$2|;
 my $EXITCODE = 0;
 END{ exit $EXITCODE; }
@@ -59,37 +64,35 @@ my $core_dumped = $? & 0x80;
 my $exit_status = ($? >> 8) & 0xFF;
 
 #read inputs
-open(my $fh, '<', "Makefile")
-    or die "Can't open < Makefile: $!";
-
-my @input;
-while(my $line = <$fh>){
+open(my $fh, '<', "Makefile") or die "Can't open < Makefile: $!";
+while (my $line = <$fh>) {
     chomp($line);
-    
-    push @input, $line;
+    my $ishash = substr($line, 0, 1);
+    if (($ishash ne "#")) {
+    	if ($line =~ /\t/) {
+    		# immplement cmd line handling
+    	} elsif ($line =~ /=/) {
+    		push @macros, $line;
+    	} elsif ($line =~ /:/) {
+    		# immplement time stamps and % handling
+    		push @targets, $line;
+    	}
+    }
 }
+close $file;
 
 sub parse_macros ($) {
     my ($line) = @_;
     return undef unless $line =~ m/^(\S+)\s*=\s*(.*?)\s*$/;
-    my ($macro, $definition) = ($1, $2);
-    my @definitions = split m/\s+/, $definition;
-    for($i = 0; $i < @definitions; $i++)
-    {
-        if(substr (@definitions[$i], 0, 1) eq \$)
-        {
-            my $temp;
-            ($temp, @definitions[$i]) = parse_macros(@definitions[$i]);
-        }
-    }
-    return $macro, \@definitions;
+    my ($macro, $value) = ($1, $2);
+    my @values = split m/\s+/, $value;
+    return $macro, \@values;
 }
 
-my %macros;
-for my $m (@macro) {
+for my $m (@macros) {
     my ($var, $val) = parse_macros $m;
     print "$0: syntax error: $input\n" and next unless defined $var;
-    $macros{$var} = $val;
+    $macro_table{$var} = $val;
 }
 
 sub parse_dep ($) {
@@ -97,27 +100,31 @@ sub parse_dep ($) {
     return undef unless $line =~ m/^(\S+)\s*:\s*(.*?)\s*$/;
     my ($target, $dependency) = ($1, $2);
     my @dependencies = split m/\s+/, $dependency;
-    if(substr ($target, 0, 1) eq \$)
-    {
-        my $temp = substr $target, 2, (length $target) - 3;
-        $target = $macros{$temp};
+    $target = unpacker($target);
+    my @deps;
+    for my $d (@dependencies) {
+    	push(@deps, unpacker($d));
     }
-    for my @dep (@dependencies) {
-        if(substr (@dep[0], 0, 1) eq \$)
-        {
-            my $temp = substr $dep, 2, (length $dep) - 3;
-            @dep = $macros{$temp};
-        }
-    }
-    return $target, \@dependencies;
+    return $target, \@deps;
 }
 
-my %targets;
-for my $input (@inputs) {
-   my ($target, $deps) = parse_dep $input;
-   print "$0: syntax error: $input\n" and next unless defined $target;
-   $targets{$target} = $deps;
+sub unpacker ($) {
+	my @results;
+	if(substr ($_, 0, 1) ne "\$") {
+		return $_;
+	} 
+	my $temp = substr($_, 2, (length($_)-3));
+    @value = $macro_table{$temp};
+	foreach $v (@value) {
+		push(@results, (unpacker $v));
+	}
+    return @results;
 }
 
-
-
+for my $t (@targets) {
+    my ($target, $deps) = parse_dep $t;
+    print "$0: syntax error: $input\n" and next unless defined $target;
+    foreach $tar (@$target) {
+        $target_table{$tar} = $deps;
+    }
+}
