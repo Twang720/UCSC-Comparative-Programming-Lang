@@ -106,7 +106,7 @@ sub parse_dep {
     $target = unpacker($target);
     my @deps;
     for my $d (@dependencies) {
-    	push(@deps, unpacker($d));
+        push(@deps, unpacker($d));
     }
     return $target, \@deps;
 }
