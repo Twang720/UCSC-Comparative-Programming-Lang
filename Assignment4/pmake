@@ -171,7 +171,17 @@ for my $target (keys %command_table)
     my $values = $command_table{$target};
     for (@$values) {
         my $cmd = parse_commands $_;
-        if ($cmd !~ /@/){
+        my $silent_command = 0;
+        my $forced_command = 0;
+        if ($cmd =~ /@/) {
+        	$silent_command = 1;
+        	$cmd =~ s/@//;
+        }
+        if ($cmd =~ /-/) {
+        	$forced_command = 1;
+        	$cmd =~ s/-//;
+        }
+        if ($silent_command == 0){
             print "$cmd\n";
         }
         system $cmd;
@@ -180,7 +190,7 @@ for my $target (keys %command_table)
         my $core_dumped = $? & 0x80;
         my $exit_status = ($? >> 8) & 0xFF;
         # also check to make sure - is not first char
-        if($cmd !~ /-/ and $exit_status != 0)
+        if($forced_command == 0 and $exit_status != 0)
         {
             die "[Makefile: $target] Error $exit_status";
         }
