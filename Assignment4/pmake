@@ -43,8 +43,8 @@ my %command_table;
 my @macros;
 my @targets;
 my $last_target;
-my $f_target
-my $f_dep
+my $f_target;
+my $f_dep;
 
 # mtime.perl subroutines to find time
 #sub mtime ($) {
@@ -110,11 +110,11 @@ sub parse_dep {
     for my $d (@dependencies) {
         push(@deps, unpacker($d));
     }
-    if ($f_target == undef && @($target)[0] != undef) {
-    	$f_target = @($target)[0];
+    if (not $f_target && $target) {
+        $f_target = $target;
     }
-    if ($f_dep == undef && @deps[0] != undef) {
-    	$f_dep = @deps[0];
+    if (not $f_dep && $deps[0]) {
+        $f_dep = $deps[0];
     }
     return $target, \@deps;
 }
@@ -172,17 +172,17 @@ for my $target (keys %command_table)
     for (@$values) {
         my $cmd = parse_commands $_;
         if ($cmd !~ /@/){
-        	print "$cmd\n";
+            print "$cmd\n";
         }
         system $cmd;
-    }
-    
-    my $term_signal = $? & 0x7F;
-    my $core_dumped = $? & 0x80;
-    my $exit_status = ($? >> 8) & 0xFF;
-    # also check to make sure - is not first char
-    if($cmd !~ /-/ and $exit_status != 0)
-    {
-        die "[Makefile: $target] Error $exit_status";
+        
+        my $term_signal = $? & 0x7F;
+        my $core_dumped = $? & 0x80;
+        my $exit_status = ($? >> 8) & 0xFF;
+        # also check to make sure - is not first char
+        if($cmd !~ /-/ and $exit_status != 0)
+        {
+            die "[Makefile: $target] Error $exit_status";
+        }
     }
 }
