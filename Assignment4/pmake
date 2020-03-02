@@ -43,6 +43,8 @@ my %command_table;
 my @macros;
 my @targets;
 my $last_target;
+my $f_target
+my $f_dep
 
 # mtime.perl subroutines to find time
 #sub mtime ($) {
@@ -108,6 +110,12 @@ sub parse_dep {
     for my $d (@dependencies) {
         push(@deps, unpacker($d));
     }
+    if ($f_target == undef && @($target)[0] != undef) {
+    	$f_target = @($target)[0];
+    }
+    if ($f_dep == undef && @deps[0] != undef) {
+    	$f_dep = @deps[0];
+    }
     return $target, \@deps;
 }
 
@@ -127,12 +135,12 @@ sub unpacker {
     elsif (substr ($macro, 1, 1) eq "\$") {
         return \$;
     }
-    #elsif (substr ($macro, 1, 1) eq "<") {
-    #   return $dependency;
-    #}
-    #elsif (substr ($macro, 1, 1) eq "@") {
-    #   return $target;
-    #}
+    elsif (substr ($macro, 1, 1) eq "<") {
+       return $f_dep;
+    }
+    elsif (substr ($macro, 1, 1) eq "@") {
+       return $f_target;
+    }
     else
     {
         my $temp = substr($macro, 2, (length($_)-3));
@@ -163,7 +171,9 @@ for my $target (keys %command_table)
     my $values = $command_table{$target};
     for (@$values) {
         my $cmd = parse_commands $_;
-        print "$cmd\n";
+        if ($cmd !~ /@/){
+        	print "$cmd\n";
+        }
         system $cmd;
     }
     
@@ -171,7 +181,7 @@ for my $target (keys %command_table)
     my $core_dumped = $? & 0x80;
     my $exit_status = ($? >> 8) & 0xFF;
     # also check to make sure - is not first char
-    if($exit_status != 0)
+    if($cmd !~ /-/ and $exit_status != 0)
     {
         die "[Makefile: $target] Error $exit_status";
     }
