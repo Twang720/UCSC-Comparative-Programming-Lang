@@ -66,13 +66,14 @@ while (my $line = <$fh>) {
     chomp($line);
     my $ishash = substr($line, 0, 1);
     if (($ishash ne "#")) {
-        if ($line =~ /\t/) {
+        if ($line =~ /\t(.*)$/) {
             my $array = $command_table{$last_target};
-            push @$array, $line;
+            push @$array, $1;
             $command_table{$last_target} = $array;
         } elsif ($line =~ /=/) {
             push @macros, $line;
         } elsif ($line =~ m/^(\S+)\s*:\s*(.*?)\s*$/) {
+            # need to store first target seperately for case of no args
             # implement time stamps and % handling
             push @targets, $line;
             $last_target = $1;
@@ -82,7 +83,7 @@ while (my $line = <$fh>) {
 close $fh;
 
 # split macros
-sub parse_macros ($) {
+sub parse_macros {
     my ($line) = @_;
     return undef unless $line =~ m/^(\S+)\s*=\s*(.*?)\s*$/;
     my ($macro, $value) = ($1, $2);
@@ -97,7 +98,7 @@ for my $m (@macros) {
 }
 
 # split dependencies
-sub parse_dep ($) {
+sub parse_dep {
     my ($line) = @_;
     return undef unless $line =~ m/^(\S+)\s*:\s*(.*?)\s*$/;
     my ($target, $dependency) = ($1, $2);
@@ -117,7 +118,7 @@ for my $t (@targets) {
 }
 
 # replace macros, recursively if needed
-sub unpacker ($) {
+sub unpacker {
     my ($macro) = @_;
     my @results;
     if(substr ($macro, 0, 1) ne "\$") {
@@ -135,12 +136,24 @@ sub unpacker ($) {
     else
     {
         my $temp = substr($macro, 2, (length($_)-3));
-        my @value = $macro_table{$temp};
-        foreach my $v (@value) {
-            push(@results, (unpacker $v));
+        my $value = $macro_table{$temp};
+        foreach my $v (@$value) {
+            push(@results, unpacker ($v));
         }
     }
     return @results;
+}
+
+# split commands and replace macros
+sub parse_commands {
+    my ($line) = @_;
+    my @words = split m/\s+/, $line;
+    my @new_cmd;
+    for (@words)
+    {
+        push @new_cmd, unpacker($_);
+    }
+    return join(" ", @new_cmd);
 }
 
 # execute commands
@@ -149,8 +162,9 @@ for my $target (keys %command_table)
     # check to make sure that @ is not first char
     my $values = $command_table{$target};
     for (@$values) {
-        print " \"$_\"";
-        system $_;
+        my $cmd = parse_commands $_;
+        print "$cmd\n";
+        system $cmd;
     }
     
     my $term_signal = $? & 0x7F;
