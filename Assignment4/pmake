@@ -42,7 +42,6 @@ my %target_table;
 my %command_table;
 my @macros;
 my @targets;
-my @commands;
 my $last_target;
 
 # mtime.perl subroutines to find time
@@ -66,22 +65,18 @@ open(my $fh, '<', "Makefile") or die "Can't open < Makefile: $!";
 while (my $line = <$fh>) {
     chomp($line);
     my $ishash = substr($line, 0, 1);
-    my @temp_cmds;
     if (($ishash ne "#")) {
-    	if ($line =~ /\t/) {
-            push @temp_cmds, $line;
-    	} elsif ($line =~ /=/) {
-    		push @macros, $line;
-    	} elsif ($line =~ m/^(\S+)\s*:\s*(.*?)\s*$/) {
-    		# implement time stamps and % handling
-            if($last_target)
-            {
-                $command_table{$last_target} = @temp_cmds;
-                @temp_cmds = undef;
-            }
-    		push @targets, $line;
+        if ($line =~ /\t/) {
+            my $array = $command_table{$last_target};
+            push @$array, $line;
+            $command_table{$last_target} = $array;
+        } elsif ($line =~ /=/) {
+            push @macros, $line;
+        } elsif ($line =~ m/^(\S+)\s*:\s*(.*?)\s*$/) {
+            # implement time stamps and % handling
+            push @targets, $line;
             $last_target = $1;
-    	}
+        }
     }
 }
 close $fh;
@@ -123,28 +118,26 @@ for my $t (@targets) {
 
 # replace macros, recursively if needed
 sub unpacker ($) {
-    my ($macro, $target, $dependency) = $_;
+    my ($macro) = @_;
     my @results;
-    if($macro) {
-        if(substr ($macro, 0, 1) ne "\$") {
-            return $macro;
-        }
-        elsif (substr ($macro, 1, 1) eq "\$") {
-            return \$;
-        }
-        elsif (substr ($macro, 1, 1) eq "<") {
-            return $dependency;
-        }
-        elsif (substr ($macro, 1, 1) eq "@") {
-            return $target;
-        }
-        else
-        {
-            my $temp = substr($macro, 2, (length($_)-3));
-            my @value = $macro_table{$temp};
-            foreach my $v (@value) {
-                push(@results, (unpacker $v));
-            }
+    if(substr ($macro, 0, 1) ne "\$") {
+        return $macro;
+    }
+    elsif (substr ($macro, 1, 1) eq "\$") {
+        return \$;
+    }
+    #elsif (substr ($macro, 1, 1) eq "<") {
+    #   return $dependency;
+    #}
+    #elsif (substr ($macro, 1, 1) eq "@") {
+    #   return $target;
+    #}
+    else
+    {
+        my $temp = substr($macro, 2, (length($_)-3));
+        my @value = $macro_table{$temp};
+        foreach my $v (@value) {
+            push(@results, (unpacker $v));
         }
     }
     return @results;
@@ -154,8 +147,11 @@ sub unpacker ($) {
 for my $target (keys %command_table)
 {
     # check to make sure that @ is not first char
-    print " \"$_\"" for @$target;
-    system @$target;
+    my $values = $command_table{$target};
+    for (@$values) {
+        print " \"$_\"";
+        system $_;
+    }
     
     my $term_signal = $? & 0x7F;
     my $core_dumped = $? & 0x80;
