@@ -60,7 +60,6 @@ $SIG{'__DIE__'} = sub { warn @_; exit; };
 #    -abc  flags not requiring options
 #    -opq  flags requiring arguments
 #
-# $RCSID
 __END_USAGE__
 
 use Getopt::Std;
@@ -72,13 +71,12 @@ print $USAGE and exit if $OPTS{'h'};
 my %macro_table;
 my %target_table;
 my %command_table;
-my @first;
 my @macros;
 my @targets;
 my $last_target;
 my $f_target;
 my $f_dep;
-my $first_check;
+my $first;
 
 # mtime.perl subroutines to find time
 #sub mtime ($) {
@@ -98,6 +96,7 @@ my $first_check;
 
 #read inputs
 open(my $fh, '<', "Makefile") or die "Can't open < Makefile: $!";
+$first = $ARGV[0];
 while (my $line = <$fh>) {
     chomp($line);
     my $ishash = substr($line, 0, 1);
@@ -109,10 +108,9 @@ while (my $line = <$fh>) {
         } elsif ($line =~ /=/) {
             push @macros, $line;
         } elsif ($line =~ m/^(\S+)\s*:\s*(.*?)\s*$/) {
-            if (not $first_check)
+            if (not $first)
             {
-                $first_check = 1;
-                push @first, $line;
+                $first = $1;
             }
             # implement time stamps and % handling
             push @targets, $line;
@@ -145,6 +143,10 @@ sub parse_dep {
     my @dependencies = split m/\s+/, $dependency;
     $target = unpacker($target);
     my @deps;
+    if (not @dependencies)
+    {
+        push(@deps, "undef");
+    }
     for my $d (@dependencies) {
         push(@deps, unpacker($d));
     }
@@ -158,9 +160,9 @@ sub parse_dep {
 }
 
 for my $t (@targets) {
-    my ($target, @deps) = parse_dep $t;
+    my ($target, $deps) = parse_dep $t;
     print "$0: syntax error: $t\n" and next unless defined $target;
-    $target_table{$target} = \@deps;
+    $target_table{$target} = $deps;
 }
 
 # replace macros, recursively if needed
@@ -203,21 +205,37 @@ sub parse_commands {
 }
 
 # execute commands
-for my $target (keys %command_table)
-{
-    # check to make sure that @ is not first char
-    my $values = $command_table{$target};
+sub run_cmds {
+    my $tar = $_[0];
+    my $values = $command_table{$tar};
+    my $depends = $target_table{$tar};
+    foreach (@$depends) {
+        if(exists $target_table{$_})
+        {
+            run_cmds($_);
+        }
+        else
+        {
+            #check timestamps?
+        }
+    }
     for (@$values) {
+        if($_ eq "undef")
+        {
+            next;
+        }
         my $cmd = parse_commands $_;
         my $silent_command = 0;
         my $forced_command = 0;
+        # check to make sure that @ is not first char
         if ($cmd =~ /@/) {
-        	$silent_command = 1;
-        	$cmd =~ s/@//;
+            $silent_command = 1;
+            $cmd =~ s/@//;
         }
+        # also check to make sure - is not first char
         if ($cmd =~ /-/) {
-        	$forced_command = 1;
-        	$cmd =~ s/-//;
+            $forced_command = 1;
+            $cmd =~ s/-//;
         }
         if ($silent_command == 0){
             print "$cmd\n";
@@ -227,14 +245,16 @@ for my $target (keys %command_table)
         my $term_signal = $? & 0x7F;
         my $core_dumped = $? & 0x80;
         my $exit_status = ($? >> 8) & 0xFF;
-        # also check to make sure - is not first char
         if($forced_command == 0 and $exit_status != 0)
         {
-            die "[Makefile: $target] Error $exit_status";
+            die "[Makefile: $tar] Error $exit_status";
         }
         elsif($exit_status != 0)
         {
-            print STDERR "[Makefile: $target] Error $exit_status\n";
+            print STDERR "[Makefile: $tar] Error $exit_status\n";
         }
     }
 }
+
+run_cmds ($first);
+exit(0);
