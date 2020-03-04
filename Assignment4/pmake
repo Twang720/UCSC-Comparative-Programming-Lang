@@ -78,18 +78,6 @@ my $f_target;
 my $f_dep;
 my $first;
 
-# mtime.perl subroutines to find time
-
-
-#sub fileinfo ($) {
-#   my ($filename) = @_;
-#   my $mtime = mtime $filename;
-#   print "$filename: ";
-#   if (defined $mtime) {print strftime "%c\n", localtime $mtime}
-#   else {print "$!\n"}
-#   return $mtime;
-#}
-
 #read inputs
 open(my $fh, '<', "Makefile") or die "Can't open < Makefile: $!";
 $first = $ARGV[0];
@@ -139,6 +127,10 @@ sub parse_dep {
     my @dependencies = split m/\s+/, $dependency;
     my @temp_target;
     push(@temp_target, unpacker($target));
+    if($target ne $temp_target[0])
+    {
+        $command_table{$temp_target[0]} = $command_table{$target};
+    }
     $target = $temp_target[0];
     my @deps;
     if (not @dependencies)
@@ -218,22 +210,6 @@ sub run_cmds {
         {
             run_cmds($_);
         }
-        else
-        {
-            # is a file
-            #if(not -e $tar || not -e $_)
-            #{
-            #    print STDOUT "files don't exist\n";
-            #}
-            #elsif(mtime($tar) > mtime($_))
-            #{
-            #    print STDOUT "target newer than prereq\n";
-            #}
-            #else
-            #{
-            #    print STDOUT "target same or older than prereq\n";
-            #}
-        }
     }
     for (@$values) {
         if($_ eq "undef")
@@ -263,12 +239,12 @@ sub run_cmds {
         my $exit_status = ($? >> 8) & 0xFF;
         if($forced_command == 0 and $exit_status != 0)
         {
-            die "[Makefile: $tar] Error $exit_status";
+            die "make: [Makefile: $tar] Error $exit_status";
         }
         elsif($exit_status != 0)
         {
-            print STDERR "[Makefile: $tar] Error $exit_status 
-            [Error Ignored]\n";
+            print STDERR "make: [Makefile: $tar] ";
+            print STDERR "Error $exit_status (ignored)\n";
         }
     }
 }
