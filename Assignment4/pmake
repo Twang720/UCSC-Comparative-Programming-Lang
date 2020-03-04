@@ -72,11 +72,13 @@ print $USAGE and exit if $OPTS{'h'};
 my %macro_table;
 my %target_table;
 my %command_table;
+my @first;
 my @macros;
 my @targets;
 my $last_target;
 my $f_target;
 my $f_dep;
+my $first_check;
 
 # mtime.perl subroutines to find time
 #sub mtime ($) {
@@ -107,7 +109,11 @@ while (my $line = <$fh>) {
         } elsif ($line =~ /=/) {
             push @macros, $line;
         } elsif ($line =~ m/^(\S+)\s*:\s*(.*?)\s*$/) {
-            # need to store first target seperately for case of no args
+            if (not $first_check)
+            {
+                $first_check = 1;
+                push @first, $line;
+            }
             # implement time stamps and % handling
             push @targets, $line;
             $last_target = $1;
@@ -225,6 +231,10 @@ for my $target (keys %command_table)
         if($forced_command == 0 and $exit_status != 0)
         {
             die "[Makefile: $target] Error $exit_status";
+        }
+        elsif($exit_status != 0)
+        {
+            print STDERR "[Makefile: $target] Error $exit_status\n";
         }
     }
 }
