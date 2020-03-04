@@ -79,11 +79,7 @@ my $f_dep;
 my $first;
 
 # mtime.perl subroutines to find time
-#sub mtime ($) {
-#    my ($filename) = @_;
-#   my @stat = stat $filename;
-#   return @stat ? $stat[9] : undef;
-#}
+
 
 #sub fileinfo ($) {
 #   my ($filename) = @_;
@@ -183,13 +179,19 @@ sub unpacker {
     }
     else
     {
-        my $temp = substr($macro, 2, (length($_)-3));
+        my $temp = substr($macro, 2, (length($macro)-3));
         my $value = $macro_table{$temp};
         foreach my $v (@$value) {
             push(@results, unpacker ($v));
         }
     }
     return @results;
+}
+
+sub mtime ($) {
+    my ($filename) = @_;
+    my @stat = stat $filename;
+    return @stat ? $stat[9] : undef;
 }
 
 # split commands and replace macros
@@ -216,7 +218,19 @@ sub run_cmds {
         }
         else
         {
-            #check timestamps?
+            # is a file
+            #if(not -e $tar || not -e $_)
+            #{
+            #    print STDOUT "files don't exist\n";
+            #}
+            #elsif(mtime($tar) > mtime($_))
+            #{
+            #    print STDOUT "target newer than prereq\n";
+            #}
+            #else
+            #{
+            #    print STDOUT "target same or older than prereq\n";
+            #}
         }
     }
     for (@$values) {
@@ -228,14 +242,14 @@ sub run_cmds {
         my $silent_command = 0;
         my $forced_command = 0;
         # check to make sure that @ is not first char
-        if ($cmd =~ /@/) {
+        if (substr($cmd, 0, 1) eq "@") {
             $silent_command = 1;
-            $cmd =~ s/@//;
+            $cmd = substr($cmd, 2);
         }
         # also check to make sure - is not first char
-        if ($cmd =~ /-/) {
+        if (substr($cmd, 0, 1) eq "-") {
             $forced_command = 1;
-            $cmd =~ s/-//;
+            $cmd = substr($cmd, 2);
         }
         if ($silent_command == 0){
             print "$cmd\n";
@@ -251,7 +265,7 @@ sub run_cmds {
         }
         elsif($exit_status != 0)
         {
-            print STDERR "[Makefile: $tar] Error $exit_status\n";
+            print STDERR "[Makefile: $tar] Error $exit_status [Error Ignored]\n";
         }
     }
 }
