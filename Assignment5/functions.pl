@@ -1,6 +1,6 @@
-# functions.pl
-# Timothy Wang tqwang
-# Eric Mar emmar
+% functions.pl
+% Timothy Wang tqwang
+% Eric Mar emmar
 
 mathfns( X, List ) :-
    S is sin( X ),
@@ -25,4 +25,8 @@ haversine_radians( Lat1, Lon1, Lat2, Lon2, Distance ) :-
    Dist is 2 * atan2( sqrt( A ), sqrt( 1 - A )),
    Distance is Dist * 3961.
 
-
+show( Code) :-
+    airport( Code, City, Nlat, Wlong),
+    write( Code), write( ' '), write( City),
+    write( ' Nlat='), write( Nlat),
+    write( ' Wlong='), write( Wlong), nl.
