@@ -63,7 +63,7 @@ show( Code) :-
 %
 distance( A1, A2, Dist) :-
    airport( A1, _, degmin( Deg1, Min1), degmin( Deg2, Min2)),
-   airport( A2, _ degmin( Deg3, Min3), degmin( Deg4, Min4)),
+   airport( A2, _, degmin( Deg3, Min3), degmin( Deg4, Min4)),
    deg_to_radians( Deg1, Min1, Lat1),
    deg_to_radians( Deg2, Min2, Long1),
    deg_to_radians( Deg3, Min3, Lat2),
@@ -83,10 +83,29 @@ hours_to_minutes( Hours, Mins) :-
    Mins is Hours * 60.
 
 %
-% Is there a path from one airport to another?
+% Find a path from one node to another.
 %
-ispath( L, L, _).
-ispath( L, M, Path) :-
-   flight( L, X, _),
-   not( member( X, Path)),
-   ispath( X, M, [L|Path]).
+writeallpaths( Node, Node) :-
+   write( Node), write( ' is '), write( Node), nl.
+writeallpaths( A1, A2) :-
+   airport( A1, Name1, _, _),
+   airport( A2, Name2, _, _),
+   listpath( A1, A2, [Node], List),
+   write( Name1), write( ' to '), write( Name2), write( ' is '),
+   writepath( List),
+   fail.
+
+writepath( []) :-
+   nl.
+writepath( [Head|Tail]) :-
+   write( ' '), write( Head), writepath( Tail).
+
+listpath( Node, End, Outlist) :-
+   listpath( Node, End, [Node], Outlist).
+
+listpath( Node, Node, _, [Node]).
+listpath( Node, End, Tried, [Name|List]) :-
+   flight( Node, Next, _),
+   airport( Node, Name, _, _),
+   not( member( Next, Tried)),
+   listpath( Next, End, [Next|Tried], List).
