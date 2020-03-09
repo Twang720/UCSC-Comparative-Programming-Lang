@@ -25,8 +25,11 @@ haversine_radians( Lat1, Lon1, Lat2, Lon2, Distance ) :-
    Dist is 2 * atan2( sqrt( A ), sqrt( 1 - A )),
    Distance is Dist * 3961.
 
+deg_to_radians( Deg, Min, Radian) :-
+   Radian is (Deg + Min / 60) * (pi / 180).
+
 show( Code) :-
-    airport( Code, City, Nlat, Wlong),
-    write( Code), write( ' '), write( City),
-    write( ' Nlat='), write( Nlat),
-    write( ' Wlong='), write( Wlong), nl.
+   airport( Code, City, Nlat, Wlong),
+   write( Code), write( ' '), write( City),
+   write( ' Nlat='), write( Nlat),
+   write( ' Wlong='), write( Wlong), nl.
