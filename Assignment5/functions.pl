@@ -33,3 +33,12 @@ show( Code) :-
    write( Code), write( ' '), write( City),
    write( ' Nlat='), write( Nlat),
    write( ' Wlong='), write( Wlong), nl.
+
+distance( A1, A2, Dist) :-
+   airport( A1, _, degmin( Deg1, Min1), degmin( Deg2, Min2)),
+   airport( A2, _ degmin( Deg3, Min3), degmin( Deg4, Min4)),
+   deg_to_radians( Deg1, Min1, Lat1),
+   deg_to_radians( Deg2, Min2, Long1),
+   deg_to_radians( Deg3, Min3, Lat2),
+   deg_to_radians( Deg4, Min4, Long2),
+   haversine_radians( Lat1, Long1, Lat2, Long2, Dist),
