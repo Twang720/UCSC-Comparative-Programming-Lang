@@ -68,44 +68,89 @@ distance( A1, A2, Dist) :-
    deg_to_radians( Deg2, Min2, Long1),
    deg_to_radians( Deg3, Min3, Lat2),
    deg_to_radians( Deg4, Min4, Long2),
-   haversine_radians( Lat1, Long1, Lat2, Long2, Dist).
+   haversine_radians( Lat1, Long1, Lat2, Long2, Distance),
+   Dist is round(Distance).
 
 %
 % Converts distance to hours
 %
-dist_to_hours( Dist, Hours) :-
+hours( Dist, Hours) :-
    Hours is Dist/500.
+
+%
+% Converts to singular time unit
+%
+minutes( Hours, Mins, Time) :-
+Time is (Hours * 60) + Mins.
 
 %
 % Converts hours to mintues
 %
-hours_to_minutes( Hours, Mins) :-
-   Mins is Hours * 60.
+hours_and_minutes( Time, Hours, Mins) :-
+   Hours is floor(Time),
+   Temp is (Time - Hours) * 60,
+   Mins is round(Temp).
+
+%
+% Formatting stuff to print
+%
+pad2( Num, Padded) :- Num < 10, string_concat( '0', Num, Padded).
+pad2( Num, Num).
+
+print_flight( Activity, Code, Name, Hour, Min) :-
+   write( Activity), write( '  '),
+   string_upper( Code, Upper),
+   write( Upper), write( ' '), write( Name), write( ' '),
+   pad2( Hour, Hour2), write( Hour2), write( ':'),
+   pad2( Min, Min2), write( Min2), nl.
 
 %
 % Find a path from one node to another.
 %
-writeallpaths( Node, Node) :-
-   write( Node), write( ' is '), write( Node), nl.
-writeallpaths( A1, A2) :-
-   airport( A1, Name1, _, _),
-   airport( A2, Name2, _, _),
-   listpath( A1, A2, [Node], List),
-   write( Name1), write( ' to '), write( Name2), write( ' is '),
+writeallpaths( Depart, Depart) :-
+   write('Can\'t fly to same airport.'), nl.
+writeallpaths( Depart, Arrive) :-
+   listpath( Depart, Arrive, [Depart], 0, List),
    writepath( List),
    fail.
 
+%
+% Helper function that prints flights
+%
 writepath( []) :-
    nl.
-writepath( [Head|Tail]) :-
-   write( ' '), write( Head), writepath( Tail).
+writepath( [Depart, Arrive|List]) :-
+   airport(Depart, Name1, _, _),
+   airport(Arrive, Name2, _, _),
+   flight(Depart, Arrive, time(Hour1, Min1)),
+   distance(Depart, Arrive, Dist),
+   hours(Dist, Time),
+   hours_and_minutes(Time, Hour2, Min2),
+   current_time(Hour1, Min1, Hour2, Min2, Time),
+   hours_and_minutes(Time, Hour3, Min3),
+   print_flight( 'depart', Depart, Name1, Hour1, Min1),
+   print_flight( 'arrive', Arrive, Name2, Hour3, Min3),
+   writepath( [Arrive|List]).
 
-listpath( Node, End, Outlist) :-
-   listpath( Node, End, [Node], Outlist).
+%
+% Helper function to create list of flights
+%
+listpath( Depart, Destination, Outlist) :-
+   listpath( Depart, Destination, [Depart], Outlist).
 
-listpath( Node, Node, _, [Node]).
-listpath( Node, End, Tried, [Name|List]) :-
-   flight( Node, Next, _),
-   airport( Node, Name, _, _),
-   not( member( Next, Tried)),
-   listpath( Next, End, [Next|Tried], List).
+listpath( Depart, Depart, _, _, [Depart]).
+listpath( Depart, Destination, Tried, Time, [Depart|List]) :-
+   flight(Depart, Connecting, time(Hour1, Min1)),
+   not( member( Connecting, Tried)),
+   minutes(Hour1, Min1, Time1),
+   not( Time > Time1),
+   distance(Depart, Connecting, Dist),
+   hours(Dist, T),
+   hours_and_minutes(T, Hour2, Min2),
+   current_time(Hour1, Min1, Hour2, Min2, T),
+   listpath( Connecting, Destination, [Connecting|Tried], T+30, List).
+
+current_time( Hour1, Min1, Hour2, Min2, Time) :-
+   minutes(Hour1, Min1, Time1),
+   minutes(Hour2, Min2, Time2),
+   Time is Time1+Time2.
