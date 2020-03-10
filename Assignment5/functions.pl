@@ -118,7 +118,7 @@ writepath( [Head, Head2|Tail]) :-
    flight(Head, Head2, time(Hour, Min)),
    hours(Head, Head2, Time),
    hours_and_minutes(Time, Hour2, Min2),
-   Temp is round((Min + Min2)/60),
+   Temp is floor((Min + Min2)/60),
    Hour3 is Hour + Hour2 + Temp,
    Min3 is mod(Min + Min2,60),
    print_flight('depart', Head, Name, Hour, Min),
