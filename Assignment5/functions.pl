@@ -112,10 +112,9 @@ fly( Depart, Arrive) :-
 %
 writepath( []) :-
    nl.
-writepath( [Head, Head2|Tail]) :-
+writepath( [flight(Head, Head2, time(Hour, Min)) |Tail]) :-
    airport(Head, Name, _, _),
    airport(Head2, Name2, _, _),
-   flight(Head, Head2, time(Hour, Min)),
    hours(Head, Head2, Time),
    hours_and_minutes(Time, Hour2, Min2),
    Temp is floor((Min + Min2)/60),
@@ -123,15 +122,13 @@ writepath( [Head, Head2|Tail]) :-
    Min3 is mod(Min + Min2,60),
    print_flight('depart', Head, Name, Hour, Min),
    print_flight('arrive', Head2, Name2, Hour3, Min3),
-   writepath( [Head2|Tail]).
-writepath( [_|Tail]) :-
    writepath( Tail).
 
 listpath( Node, End, Outlist) :-
    listpath( Node, End, [Node], 0, Outlist).
 
-listpath( Node, Node, _, _, [Node]).
-listpath( Node, End, Tried, Time, [Node|List]) :-
+listpath( Node, Node, _, _, []).
+listpath( Node, End, Tried, Time, [flight(Node, Next, time(Hour, Minute))|List]) :-
    flight( Node, Next, time(Hour, Minute)),
    not( member( Next, Tried)),
    minutes(Hour, Minute, T1),
