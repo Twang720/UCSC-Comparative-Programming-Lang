@@ -102,13 +102,24 @@ print_flight( Activity, Code, Name, Hour, Min) :-
 % Find a path from one node to another.
 %
 fly( Depart, Depart) :-
-   write('Error: Can\'t fly to same airport.'), nl.
+   write('Error: Can\'t fly to same airport ('),
+   write(Depart), write(').'), nl.
 fly( Depart, Arrive) :-
+   not(exist(Depart)),
+   not(exist(Arrive)),
    listpath( Depart, Arrive, List),
    writepath( List), !.
 
 %
-% Helper function that prints flights
+% Checks to see if airport exists or not
+%
+exist(Code) :-
+   not(airport(Code,_,_,_)),
+   write('Not a real airport code ('),
+   write(Code), write(').'), nl.
+
+%
+% Helper function that prints flight path
 %
 writepath( []) :-
    nl.
@@ -124,11 +135,15 @@ writepath( [flight(Head, Head2, time(Hour, Min)) |Tail]) :-
    print_flight('arrive', Head2, Name2, Hour3, Min3),
    writepath( Tail).
 
+%
+% Goes through database and adds first flight path found to list
+%
 listpath( Node, End, Outlist) :-
    listpath( Node, End, [Node], 0, Outlist).
 
 listpath( Node, Node, _, _, []).
-listpath( Node, End, Tried, Time, [flight(Node, Next, time(Hour, Minute))|List]) :-
+listpath( Node, End, Tried, Time,
+ [flight(Node, Next, time(Hour, Minute))|List]) :-
    flight( Node, Next, time(Hour, Minute)),
    not( member( Next, Tried)),
    minutes(Hour, Minute, T1),
