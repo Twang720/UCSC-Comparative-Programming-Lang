@@ -102,11 +102,13 @@ print_flight( Activity, Code, Name, Hour, Min) :-
 % Find a path from one node to another.
 %
 fly( Airport, Airport) :-
-   not(isVar(Airport)),
+   atom(Airport),
    string_upper( Airport, Upper),
    write('Error: Can\'t fly to same airport ('),
    write(Upper), write(').'), nl, !, fail.
 fly( Depart, Arrive) :-
+   not(isVar(Depart)),
+   not(isVar(Arrive)),
    not(exist(Depart)),
    not(exist(Arrive)),
    listpath( Depart, Arrive, List),
@@ -117,7 +119,7 @@ fly( Depart, Arrive) :-
 %
 isVar(Var) :-
    not(atom(Var)),
-   write('Cannot be variable.'), nl.
+   write('Cannot input a variable.'), nl.
 
 %
 % Checks to see if airport exists or not
