@@ -101,9 +101,10 @@ print_flight( Activity, Code, Name, Hour, Min) :-
 %
 % Find a path from one node to another.
 %
-fly( Depart, Depart) :-
+fly( Airport, Airport) :-
+   string_upper( Airport, Upper),
    write('Error: Can\'t fly to same airport ('),
-   write(Depart), write(').'), nl.
+   write(Upper), write(').'), nl.
 fly( Depart, Arrive) :-
    not(exist(Depart)),
    not(exist(Arrive)),
@@ -115,8 +116,9 @@ fly( Depart, Arrive) :-
 %
 exist(Code) :-
    not(airport(Code,_,_,_)),
+   string_upper( Code, Upper),
    write('Not a real airport code ('),
-   write(Code), write(').'), nl.
+   write(Upper), write(').'), nl.
 
 %
 % Helper function that prints flight path
